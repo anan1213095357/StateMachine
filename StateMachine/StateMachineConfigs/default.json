@@ -1,0 +1,375 @@
+﻿{
+  "regions": [
+    {
+      "id": "region_9786e42d52f34fb08f6c8bdae7080f45",
+      "name": "\u673A\u5668\u4EBA"
+    },
+    {
+      "id": "region_c77fcb7514784b428671126d7767bc41",
+      "name": "\u8F93\u9001\u7EBF"
+    }
+  ],
+  "variables": [
+    {
+      "id": "variable_b4cc5f28f54740c8935cc1e62f8040cc",
+      "name": "ProductReady",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_0313d68df1fe4f2fa7af7c2ceaec85f8",
+      "name": "ConveyorReady",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_adf144b504ad46b2adffa46c002abe8b",
+      "name": "RobotDone",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_40133db0bcb645e9a108652dd28aefba",
+      "name": "Emergency",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_7b31a3c6b2204cc1bb6ad342459b6034",
+      "name": "Temperature",
+      "type": "number",
+      "value": 30
+    }
+  ],
+  "states": [
+    {
+      "id": "state_aa548abd7d584130a477b67fbf3766f4",
+      "regionId": "region_9786e42d52f34fb08f6c8bdae7080f45",
+      "name": "\u673A\u5668\u4EBA\u5F85\u673A",
+      "x": 180,
+      "y": 150,
+      "isStart": true,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_ec0c01472acb4ec9ba4c97f629a2fa91",
+          "name": "\u8FD4\u56DE\u5F85\u673A"
+        },
+        {
+          "id": "input_120ca33e00eb4414bad85887fcbddc3c",
+          "name": "\u5DE5\u4F5C\u5B8C\u6210"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_c347c1f9af9e4c09b80bea1a28ee978d",
+          "name": "\u5F00\u59CB\u6293\u53D6",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_65c4beef79dd4e4ca38d7f98581c55e9",
+              "left": "ProductReady",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_0dda5e7538d74c6eb570f3ccf8dc9bcd",
+              "left": "ConveyorReady",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_aaf3ffd5aca94a448e094f108dde9aa2",
+              "left": "Emergency",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": false
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_aefb8bbd7ffd4152969e3caeda5f656e",
+          "name": "\u7D27\u6025\u505C\u6B62",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_8302c05e016a465ebd33d396c4e67659",
+              "left": "Emergency",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_86fd892dedea48cc90b1a328b7644b13",
+      "regionId": "region_9786e42d52f34fb08f6c8bdae7080f45",
+      "name": "\u673A\u5668\u4EBA\u6293\u53D6\u4E2D",
+      "x": 850,
+      "y": 120,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_c64340353713497ebc87d925b7bc324f",
+          "name": "\u542F\u52A8\u6293\u53D6"
+        },
+        {
+          "id": "input_0c6d8f1b4dac4156a4b8b548fbe8b08a",
+          "name": "\u91CD\u65B0\u8FDB\u5165"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_c8679bb9080145a785c4aa7e915296e6",
+          "name": "\u6293\u53D6\u5B8C\u6210",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_cbd7e34fa76e4efdb31d20efc2aacc2b",
+              "left": "RobotDone",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_f40a9fc6fab44a2ab1bc1db006d3c13e",
+      "regionId": "region_9786e42d52f34fb08f6c8bdae7080f45",
+      "name": "\u673A\u5668\u4EBA\u6025\u505C",
+      "x": 850,
+      "y": 500,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_ebcb2d04980b4265a2cb216b182d6c8e",
+          "name": "\u6025\u505C\u8FDB\u5165"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_0a268d79fc774d4a899c659ca9b3977e",
+          "name": "\u89E3\u9664\u6025\u505C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_f3cc78f1d92947ce947f93309cfcba53",
+              "left": "Emergency",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": false
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_72ec4fb4828f4c9d9984997ba20160fc",
+      "regionId": "region_c77fcb7514784b428671126d7767bc41",
+      "name": "\u8F93\u9001\u7EBF\u505C\u6B62",
+      "x": 180,
+      "y": 900,
+      "isStart": true,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_cade54e7e7f6415abde67b8f133fbb72",
+          "name": "\u8FDB\u5165"
+        },
+        {
+          "id": "input_47c62a28ddb141a997c5a91fd34fe3ed",
+          "name": "\u8FD0\u884C\u5B8C\u6210"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_9c286ed40a67443b99e47358dc24a5b8",
+          "name": "\u542F\u52A8",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_f520c2b5433040bf94088dd8c6a57c69",
+              "left": "ProductReady",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_05d29c6710da4c5ebaa161f7807f462a",
+      "regionId": "region_c77fcb7514784b428671126d7767bc41",
+      "name": "\u8F93\u9001\u7EBF\u8FD0\u884C",
+      "x": 850,
+      "y": 900,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_c1306a6767e84d90b2dc9e822d709078",
+          "name": "\u8FDB\u5165"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_a0b33e684fa44fb5933a3a8d9b721210",
+          "name": "\u505C\u6B62",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_1d92d7366ad14ee581438fdb6462eeee",
+              "left": "RobotDone",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_483f3524c4a84d3e9b9f4e513d03c102",
+      "fromStateId": "state_aa548abd7d584130a477b67fbf3766f4",
+      "fromPortId": "output_c347c1f9af9e4c09b80bea1a28ee978d",
+      "toStateId": "state_86fd892dedea48cc90b1a328b7644b13",
+      "toPortId": "input_c64340353713497ebc87d925b7bc324f"
+    },
+    {
+      "id": "edge_73e56620b1ad44daa15b4266ff320786",
+      "fromStateId": "state_86fd892dedea48cc90b1a328b7644b13",
+      "fromPortId": "output_c8679bb9080145a785c4aa7e915296e6",
+      "toStateId": "state_aa548abd7d584130a477b67fbf3766f4",
+      "toPortId": "input_120ca33e00eb4414bad85887fcbddc3c"
+    },
+    {
+      "id": "edge_b8c9f8d5d8484d8e8a68613f33574464",
+      "fromStateId": "state_aa548abd7d584130a477b67fbf3766f4",
+      "fromPortId": "output_aefb8bbd7ffd4152969e3caeda5f656e",
+      "toStateId": "state_f40a9fc6fab44a2ab1bc1db006d3c13e",
+      "toPortId": "input_ebcb2d04980b4265a2cb216b182d6c8e"
+    },
+    {
+      "id": "edge_3496a98577e04410b9b1f45d375f34a1",
+      "fromStateId": "state_f40a9fc6fab44a2ab1bc1db006d3c13e",
+      "fromPortId": "output_0a268d79fc774d4a899c659ca9b3977e",
+      "toStateId": "state_aa548abd7d584130a477b67fbf3766f4",
+      "toPortId": "input_ec0c01472acb4ec9ba4c97f629a2fa91"
+    },
+    {
+      "id": "edge_d53c99b34bfa4441a0c4b5e1709b20fd",
+      "fromStateId": "state_72ec4fb4828f4c9d9984997ba20160fc",
+      "fromPortId": "output_9c286ed40a67443b99e47358dc24a5b8",
+      "toStateId": "state_05d29c6710da4c5ebaa161f7807f462a",
+      "toPortId": "input_c1306a6767e84d90b2dc9e822d709078"
+    },
+    {
+      "id": "edge_c493280b549b4fb3a9993a09596e2bc2",
+      "fromStateId": "state_05d29c6710da4c5ebaa161f7807f462a",
+      "fromPortId": "output_a0b33e684fa44fb5933a3a8d9b721210",
+      "toStateId": "state_72ec4fb4828f4c9d9984997ba20160fc",
+      "toPortId": "input_47c62a28ddb141a997c5a91fd34fe3ed"
+    }
+  ],
+  "settings": {
+    "cycleDelay": 50
+  }
+}

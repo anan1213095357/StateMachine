@@ -1,0 +1,1328 @@
+﻿@page "/"
+@using System.Globalization
+@using System.IO
+@using System.Linq
+@using System.Collections.Generic
+@using System.Text
+@using System.Text.Json
+@using System.Text.Json.Nodes
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+@rendermode InteractiveServer
+
+<div id="app">
+    <div class="topbar">
+        <div class="logo">
+            <div class="logo-icon">S</div>
+            State Machine
+        </div>
+        <button class="btn primary" @onclick="AddStateAsync">+ 状态</button>
+        <button class="btn ai-btn" @onclick="OpenAiDialog">
+            ✦ AI 编排
+        </button>
+        <button class="btn green" @onclick="RunMachineAsync">▶ 运行</button>
+        <button class="btn" @onclick="StepAsync">单步</button>
+        <button class="btn red" @onclick="StopRuntime">■ 停止</button>
+        <button class="btn" @onclick="ResetRuntime">↺ 重置</button>
+        <div class="top-divider"></div>
+        <button class="btn" @onclick="ZoomOutAsync">−</button>
+        <div id="zoomLabel" class="zoom-label">85%</div>
+        <button class="btn" @onclick="ZoomInAsync">+</button>
+        <button class="btn" @onclick="FitCanvasAsync">适配</button>
+        <div class="spacer"></div>
+        <input class="top-input" placeholder="配置 Key" @bind="_configKey" @bind:event="oninput" />
+        <select class="top-select" value="@_configKey" @onchange="ConfigSelectionChanged">
+            @if (_configKeys.Count == 0)
+            {
+                <option value="">暂无保存配置</option>
+            }
+            else
+            {
+                @foreach (var key in _configKeys)
+                {
+                    <option value="@key">@key</option>
+                }
+            }
+        </select>
+        <button class="btn" @onclick="SaveConfigAsync">保存</button>
+        <button class="btn" @onclick="LoadConfigAsync">读取</button>
+        <button class="btn red" @onclick="DeleteConfigAsync">删配置</button>
+        <button class="btn" @onclick="ExportConfigAsync">导出</button>
+        <label for="importFile" class="btn import-label">导入</label>
+        <InputFile id="importFile" OnChange="ImportConfigAsync" accept=".json,application/json" style="display:none" />
+    </div>
+
+    <div class="main">
+        <aside class="left-panel">
+            <div class="section">
+                <div class="section-head">
+                    <div class="section-title">并行状态域</div>
+                    <button class="btn small" @onclick="AddRegion">+ 状态域</button>
+                </div>
+                <div id="regionList">
+                    @foreach (var region in Machine.Regions)
+                    {
+                        var currentState = GetCurrentState(region.Id);
+                        <div class="region-card @(SelectedRegionId == region.Id ? "selected" : "")" @onclick="() => SelectRegion(region.Id)">
+                            <div class="region-line">
+                                <div class="region-color"></div>
+                                <div class="region-name">@region.Name</div>
+                                <button class="remove-btn delete-region" style="width:25px;height:25px" @onclick="() => DeleteRegion(region.Id)" @onclick:stopPropagation="true">×</button>
+                            </div>
+                            <div class="region-current">Current：<strong>@(currentState?.Name ?? "-")</strong></div>
+                        </div>
+                    }
+                </div>
+                <div class="hint">每个状态域独立拥有自己的 Current State。<br />多个状态域可以同时运行。</div>
+            </div>
+
+            <div class="section">
+                <div class="section-head">
+                    <div class="section-title">全局变量</div>
+                    <button class="btn small" @onclick="AddVariable">+ 变量</button>
+                </div>
+                <div id="variableList">
+                    @foreach (var variable in Machine.Variables)
+                    {
+                        <div class="variable-card" @key="variable.Id">
+                            <div class="variable-top">
+                                <input class="input" value="@variable.Name" @oninput="e => RenameVariable(variable.Id, e.Value?.ToString() ?? string.Empty)" />
+                                <button class="remove-btn" @onclick="() => DeleteVariable(variable.Id)">×</button>
+                            </div>
+                            <div class="variable-bottom">
+                                <select class="select" value="@variable.Type" @onchange='e => ChangeVariableType(variable.Id, e.Value?.ToString() ?? "string")'>
+                                    <option value="number">number</option>
+                                    <option value="string">string</option>
+                                    <option value="boolean">boolean</option>
+                                    <option value="json">json</option>
+                                </select>
+                                @if (variable.Type == "boolean")
+                                {
+                                    <select class="select" value="@DisplayNode(variable.Value, variable.Type)" @onchange='e => ChangeVariableValue(variable.Id, e.Value?.ToString() ?? "false")'>
+                                        <option value="true">true</option>
+                                        <option value="false">false</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <input class="input" value="@DisplayNode(variable.Value, variable.Type)" @onchange="e => ChangeVariableValue(variable.Id, e.Value?.ToString() ?? string.Empty)" />
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="hint">不同状态域之间通过全局变量进行通信。</div>
+            </div>
+        </aside>
+
+        <main id="workspace" class="workspace">
+            <div id="worldScale">
+                <div id="world">
+                    <svg id="edgeSvg">
+                        <g id="edgeLayer"></g>
+                        <path id="tempEdge"></path>
+                    </svg>
+                    <div id="stateLayer">
+                        @foreach (var state in Machine.States)
+                        {
+                            var region = GetRegion(state.RegionId);
+                            var current = Runtime.CurrentStates.TryGetValue(state.RegionId, out var currentId) && currentId == state.Id;
+                            <div class="state-card @(SelectedStateId == state.Id ? "selected" : "") @(current ? "current" : "")"
+                                 data-state-id="@state.Id"
+                                 style="left:@(state.X.ToString(CultureInfo.InvariantCulture))px;top:@(state.Y.ToString(CultureInfo.InvariantCulture))px"
+                                 @key="state.Id">
+                                <div class="state-header">
+                                    @if (state.IsStart)
+                                    {
+                                        <span class="badge start-badge">START</span>
+                                    }
+                                    @if (current)
+                                    {
+                                        <span class="badge current-badge">CURRENT</span>
+                                    }
+                                    <span class="badge region-badge">@(region?.Name ?? "")</span>
+                                    <div class="state-name">@state.Name</div>
+                                </div>
+
+                                <div class="state-content">
+                                    <div class="port-zone left">
+                                        @foreach (var input in state.Inputs)
+                                        {
+                                            var connected = GetEdgeToPort(state.Id, input.Id) is not null;
+                                            <div class="port-item left" @key="input.Id">
+                                                <div class="port input-port @(connected ? "connected" : "")"
+                                                     data-direction="input"
+                                                     data-state-id="@state.Id"
+                                                     data-port-id="@input.Id"
+                                                     @onclick="() => OnInputPortClickAsync(state.Id, input.Id)"
+                                                     @onclick:stopPropagation="true"></div>
+                                                <div class="port-label">@input.Name</div>
+                                            </div>
+                                        }
+                                        <div class="port-item left">
+                                            <button class="add-port" @onclick="() => QuickAddInput(state.Id)" @onclick:stopPropagation="true">+</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="state-center">
+                                        <div class="center-title">出口条件 · 从上往下按优先级判断</div>
+                                        @if (state.Outputs.Count == 0)
+                                        {
+                                            <div class="empty-center">当前没有切换出口</div>
+                                        }
+                                        else
+                                        {
+                                            @for (var outputIndex = 0; outputIndex < state.Outputs.Count; outputIndex++)
+                                            {
+                                                var output = state.Outputs[outputIndex];
+                                                var edge = GetEdgeFromPort(state.Id, output.Id);
+                                                var detail = GetConditionResult(state.Id, output.Id);
+                                                var hasRuntimeResult = current && detail is not null;
+                                                bool? matched = hasRuntimeResult ? detail!.Matched : null;
+                                                var summaryClass = edge is null ? "unconnected" : matched == true ? "matched" : matched == false ? "failed" : "";
+                                                var iconClass = edge is null ? "unconnected" : matched == true ? "ok" : matched == false ? "no" : "idle";
+                                                var icon = edge is null ? "!" : matched == true ? "✓" : matched == false ? "×" : "·";
+                                                <div class="transition-summary @summaryClass" @key="output.Id">
+                                                    <div class="transition-summary-head">
+                                                        <div class="transition-priority">@(outputIndex + 1)</div>
+                                                        <div class="transition-name" title="@output.Name">@output.Name</div>
+                                                        <div class="mode-chip @output.MatchMode">@output.MatchMode.ToUpperInvariant()</div>
+                                                        <div class="transition-state-icon @iconClass">@icon</div>
+                                                    </div>
+                                                    <div class="condition-mini-list">
+                                                        @if (output.MatchMode == "always")
+                                                        {
+                                                            <div class="always-condition"><span>⚡</span><span>无条件切换</span></div>
+                                                        }
+                                                        else if (output.Conditions.Count == 0)
+                                                        {
+                                                            <div class="always-condition">没有配置条件</div>
+                                                        }
+                                                        else
+                                                        {
+                                                            @foreach (var condition in output.Conditions)
+                                                            {
+                                                                bool? conditionResult = null;
+                                                                if (hasRuntimeResult && detail!.Conditions.TryGetValue(condition.Id, out var cr))
+                                                                    conditionResult = cr;
+                                                                var rowClass = conditionResult == true ? "condition-ok" : conditionResult == false ? "condition-no" : "";
+                                                                var cIconClass = conditionResult == true ? "ok" : conditionResult == false ? "no" : "idle";
+                                                                var cIcon = conditionResult == true ? "✓" : conditionResult == false ? "×" : "·";
+                                                                var rightVariable = condition.RightMode == "variable";
+                                                                var rightText = rightVariable ? "$" + NodeString(condition.RightValue) : DisplayNode(condition.RightValue, condition.RightType);
+                                                                <div class="condition-mini @rowClass" @key="condition.Id">
+                                                                    <span class="expr-chip variable" title="@condition.Left">@condition.Left</span>
+                                                                    <span class="operator-chip">@condition.Operator</span>
+                                                                    <span class="expr-chip @(rightVariable ? "other-variable" : "value")" title="@rightText">@rightText</span>
+                                                                    <span class="condition-spacer"></span>
+                                                                    <span class="condition-result-icon @cIconClass">@cIcon</span>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+
+                                    <div class="port-zone right">
+                                        @foreach (var output in state.Outputs)
+                                        {
+                                            var connected = GetEdgeFromPort(state.Id, output.Id) is not null;
+                                            var pending = PendingConnection is not null && PendingConnection.StateId == state.Id && PendingConnection.PortId == output.Id;
+                                            <div class="port-item right" @key="output.Id">
+                                                <div class="port-label">@output.Name</div>
+                                                <div class="port output-port @(connected ? "connected" : "") @(pending ? "pending" : "")"
+                                                     data-direction="output"
+                                                     data-state-id="@state.Id"
+                                                     data-port-id="@output.Id"
+                                                     @onclick="() => OnOutputPortClickAsync(state.Id, output.Id)"
+                                                     @onclick:stopPropagation="true"></div>
+                                            </div>
+                                        }
+                                        <div class="port-item right">
+                                            <button class="add-port" @onclick="() => QuickAddOutput(state.Id)" @onclick:stopPropagation="true">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="state-footer">
+                                    输入：@state.Inputs.Count&nbsp;&nbsp; 输出：@state.Outputs.Count
+                                    <div class="spacer"></div>
+                                    @(current ? "实时判断中" : "非当前状态")
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right-panel">
+            <div class="inspector">
+                <div class="section-title">属性</div>
+                <div id="inspectorContent">
+                    @if (!string.IsNullOrWhiteSpace(SelectedEdgeId))
+                    {
+                        var edge = Machine.Edges.FirstOrDefault(x => x.Id == SelectedEdgeId);
+                        if (edge is not null)
+                        {
+                            var from = GetState(edge.FromStateId);
+                            var to = GetState(edge.ToStateId);
+                            var output = from?.Outputs.FirstOrDefault(x => x.Id == edge.FromPortId);
+                            var input = to?.Inputs.FirstOrDefault(x => x.Id == edge.ToPortId);
+                            <div class="group">
+                                <div class="group-title">状态连线</div>
+                                <div style="margin-top:9px;color:#9faabe;font-size:10px;line-height:1.8">
+                                    @(from?.Name ?? "")<br />
+                                    @(output?.Name ?? "")<br />
+                                    ↓<br />
+                                    @(to?.Name ?? "")<br />
+                                    @(input?.Name ?? "")
+                                </div>
+                            </div>
+                            <button class="danger" @onclick="DeleteSelectedEdge">删除连线</button>
+                        }
+                    }
+                    else if (SelectedState is null)
+                    {
+                        <div class="empty-inspector">
+                            点击状态卡片编辑。<br /><br />
+                            每个右侧切换插头拥有自己的条件组。<br /><br />
+                            ALL：所有条件全部成立。<br /><br />
+                            ANY：任意一个条件成立。<br /><br />
+                            当前状态卡中，每个小条件都会实时显示 ✓ 或 ×。<br /><br />
+                            多个出口同时满足时，从上往下只执行第一个。<br /><br />
+                            Ctrl + 鼠标滚轮：缩放画布。
+                        </div>
+                    }
+                    else
+                    {
+                        var state = SelectedState!;
+                        <div class="field">
+                            <label class="field-label">状态名称</label>
+                            <input class="input" value="@state.Name" @oninput="e => RenameState(state.Id, e.Value?.ToString() ?? string.Empty)" />
+                        </div>
+                        <div class="field">
+                            <label class="field-label">所属状态域</label>
+                            <select class="select" value="@state.RegionId" @onchange="e => ChangeStateRegion(state.Id, e.Value?.ToString() ?? string.Empty)">
+                                @foreach (var region in Machine.Regions)
+                                {
+                                    <option value="@region.Id">@region.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label style="display:flex;gap:7px;align-items:center;color:#adb8c9;font-size:10px">
+                                <input type="checkbox" checked="@state.IsStart" @onchange="e => ChangeStateStart(state.Id, e.Value is bool b && b)" />
+                                当前状态域的初始状态
+                            </label>
+                        </div>
+
+                        <div class="group">
+                            <div class="group-header">
+                                <div class="group-title">左侧进入插头</div>
+                                <button class="btn small" @onclick="() => AddInput(state.Id)">+ 插头</button>
+                            </div>
+                            @foreach (var input in state.Inputs)
+                            {
+                                <div class="port-editor" @key="input.Id">
+                                    <div class="port-editor-row">
+                                        <input class="input" value="@input.Name" @oninput="e => RenameInput(state.Id, input.Id, e.Value?.ToString() ?? string.Empty)" />
+                                        <button class="remove-btn" @onclick="() => RemoveInput(state.Id, input.Id)">×</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="group">
+                            <div class="group-title">状态生命周期</div>
+                            <div class="hint">切换前只执行一次；循环委托在当前卡片每个扫描周期执行；切换后在进入目标卡片后执行一次。</div>
+
+                            @foreach (var lifecycle in GetLifecycleActions(state))
+                            {
+                                var actionCall = lifecycle.Action;
+                                var actionDescriptor = GetActionDescriptor(actionCall.ActionMethod);
+
+                                if (actionDescriptor is not null)
+                                {
+                                    NormalizeActionArguments(actionCall, actionDescriptor);
+                                }
+
+                                <div class="action-box" style="margin-top:8px">
+                                    <div class="field-label">@lifecycle.Title</div>
+
+                                    <select class="select"
+                                            value="@actionCall.ActionMethod"
+                                            @onchange="e => ChangeStateActionMethod(state.Id, lifecycle.Key, e.Value?.ToString() ?? string.Empty)">
+                                        <option value="">不调用动作</option>
+                                        @foreach (var group in ActionMethods.GroupBy(x => x.Group))
+                                        {
+                                            <optgroup label="@group.Key">
+                                                @foreach (var action in group)
+                                                {
+                                                    <option value="@action.Key">@action.DisplayName · @action.Method.Name</option>
+                                                }
+                                            </optgroup>
+                                        }
+                                    </select>
+
+                                    @if (actionDescriptor is not null)
+                                    {
+                                        <div style="margin-top:8px;padding:7px;border:1px solid #263246;border-radius:6px;background:#101722">
+                                            <div style="font-size:9px;color:#65738a;margin-bottom:7px">
+                                                @actionDescriptor.Method.Name
+                                            </div>
+
+                                            @if (actionDescriptor.Parameters.Count == 0)
+                                            {
+                                                <div class="hint">该方法没有参数。</div>
+                                            }
+                                            else
+                                            {
+                                                @foreach (var parameter in actionDescriptor.Parameters)
+                                                {
+                                                    var argument = GetActionArgument(actionCall, parameter.Name)!;
+                                                    var editorKind = GetParameterEditorKind(actionCall, parameter);
+                                                    var compatibleVariables = GetCompatibleVariables(actionCall, parameter).ToList();
+
+                                                    <div style="margin-top:8px;padding-top:8px;border-top:1px solid #202b3d">
+                                                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+                                                            <div class="field-label" style="margin:0;flex:1">@parameter.DisplayName</div>
+                                                            <span style="font-size:8px;color:#718097;border:1px solid #2c394d;border-radius:4px;padding:2px 5px">
+                                                                @GetParameterTypeLabel(actionCall, parameter)
+                                                            </span>
+                                                        </div>
+
+                                                        <div style="display:grid;grid-template-columns:88px 1fr;gap:6px">
+                                                            <select class="select"
+                                                                    value="@argument.Source"
+                                                                    @onchange='e => ChangeStateActionArgumentSource(
+                                                                                    state.Id,
+                                                                                    lifecycle.Key,
+                                                                                    parameter.Name,
+                                                                                    e.Value?.ToString() ?? "literal")'>
+
+<option value="literal">固定值</option>
+
+        @if (CanBindGlobalVariable(actionCall, parameter))
+                                                                {
+                                                                    <option value="variable">全局变量</option>
+                                                                }
+                                                            </select>
+
+                                                            @if (argument.Source == "variable" &&
+                                                                 CanBindGlobalVariable(actionCall, parameter))
+                                                            {
+                                                                <select class="select"
+                                                                        value="@argument.VariableName"
+                                                                        @onchange="e => ChangeStateActionArgumentVariable(
+                                                                                            state.Id,
+                                                                                            lifecycle.Key,
+                                                                                            parameter.Name,
+                                                                                            e.Value?.ToString() ?? string.Empty)">
+
+            @foreach (var variable in compatibleVariables)
+                                                                    {
+                                                                        <option value="@variable.Name">
+                                                                            @variable.Name (@variable.Type)
+                                                                        </option>
+                                                                    }
+                                                                </select>
+                                                            }
+                                                            else if (editorKind == "boolean")
+                                                            {
+                                                                <select class="select"
+                                                                        value="@argument.LiteralValue"
+                                                                        @onchange='e => ChangeStateActionArgumentLiteral(
+                                                                                            state.Id,
+                                                                                            lifecycle.Key,
+                                                                                            parameter.Name,
+                                                                                            e.Value?.ToString() ?? "false")'>
+
+<option value="true">true</option>
+<option value="false">false</option>
+</select>
+                                                            }
+                                                            else if (editorKind == "enum")
+                                                            {
+                                                                <select class="select"
+                                                                        value="@argument.LiteralValue"
+                                                                        @onchange="e => ChangeStateActionArgumentLiteral(
+                                                                                            state.Id,
+                                                                                            lifecycle.Key,
+                                                                                            parameter.Name,
+                                                                                            e.Value?.ToString() ?? string.Empty)">
+
+            @foreach (var enumValue in parameter.EnumValues)
+                                                                    {
+                                                                        <option value="@enumValue">@enumValue</option>
+                                                                    }
+                                                                </select>
+                                                            }
+                                                            else if (editorKind == "number")
+                                                            {
+                                                                <input class="input"
+                                                                       type="number"
+                                                                       step="any"
+                                                                       value="@argument.LiteralValue"
+                                                                       @onchange='e => ChangeStateActionArgumentLiteral(
+                                                                                          state.Id,
+                                                                                          lifecycle.Key,
+                                                                                          parameter.Name,
+                                                                                          e.Value?.ToString() ?? "0")' />
+    }
+                                                            else if (editorKind == "datetime")
+                                                            {
+                                                                <input class="input"
+                                                                       type="datetime-local"
+                                                                       value="@argument.LiteralValue"
+                                                                       @onchange="e => ChangeStateActionArgumentLiteral(
+                                                                                          state.Id,
+                                                                                          lifecycle.Key,
+                                                                                          parameter.Name,
+                                                                                          e.Value?.ToString() ?? string.Empty)" />
+    }
+                                                            else if (editorKind == "date")
+                                                            {
+                                                                <input class="input"
+                                                                       type="date"
+                                                                       value="@argument.LiteralValue"
+                                                                       @onchange="e => ChangeStateActionArgumentLiteral(
+                                                                                          state.Id,
+                                                                                          lifecycle.Key,
+                                                                                          parameter.Name,
+                                                                                          e.Value?.ToString() ?? string.Empty)" />
+    }
+                                                            else if (editorKind == "time")
+                                                            {
+                                                                <input class="input"
+                                                                       type="time"
+                                                                       step="1"
+                                                                       value="@argument.LiteralValue"
+                                                                       @onchange="e => ChangeStateActionArgumentLiteral(
+                                                                                          state.Id,
+                                                                                          lifecycle.Key,
+                                                                                          parameter.Name,
+                                                                                          e.Value?.ToString() ?? string.Empty)" />
+    }
+                                                            else if (editorKind == "json")
+                                                            {
+                                                                <textarea class="input"
+                                                                          rows="3"
+                                                                          @onchange="e => ChangeStateActionArgumentLiteral(
+                                                                                                state.Id,
+                                                                                                lifecycle.Key,
+                                                                                                parameter.Name,
+                                                                                                e.Value?.ToString() ?? string.Empty)">@argument.LiteralValue</textarea>
+    }
+                                                            else
+                                                            {
+                                                                <input class="input"
+                                                                       value="@argument.LiteralValue"
+                                                                       @onchange="e => ChangeStateActionArgumentLiteral(
+                                                                                          state.Id,
+                                                                                          lifecycle.Key,
+                                                                                          parameter.Name,
+                                                                                          e.Value?.ToString() ?? string.Empty)" />
+    }
+                                                        </div>
+
+
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <div class="group">
+                            <div class="group-header">
+                                <div class="group-title">右侧切换插头</div>
+                                <button class="btn small" @onclick="() => AddOutput(state.Id)">+ 插头</button>
+                            </div>
+                            <div class="hint">从上往下就是切换优先级。</div>
+                            <div style="margin-top:8px">
+                                @for (var outputIndex = 0; outputIndex < state.Outputs.Count; outputIndex++)
+                                {
+                                    var output = state.Outputs[outputIndex];
+                                    var connected = GetEdgeFromPort(state.Id, output.Id) is not null;
+                                    <div class="transition-editor" @key="output.Id">
+                                        <div class="transition-head">
+                                            <input class="input" value="@output.Name" @oninput="e => RenameOutput(state.Id, output.Id, e.Value?.ToString() ?? string.Empty)" />
+                                            <button class="mini-btn" @onclick="() => MoveOutput(state.Id, output.Id, -1)">↑</button>
+                                            <button class="mini-btn" @onclick="() => MoveOutput(state.Id, output.Id, 1)">↓</button>
+                                            <button class="remove-btn" @onclick="() => RemoveOutput(state.Id, output.Id)">×</button>
+                                        </div>
+                                        <div style="margin-bottom:7px;color:#65738a;font-size:9px">优先级：@(outputIndex + 1) · @(connected ? "已连接" : "未连接")</div>
+                                        <div class="transition-grid">
+                                            <div style="display:flex;align-items:center;color:#748298;font-size:9px">条件组合</div>
+                                            <select class="select" value="@output.MatchMode" @onchange='e => ChangeOutputMatchMode(state.Id, output.Id, e.Value?.ToString() ?? "all")'>
+                                                <option value="all">ALL 全部成立</option>
+                                                <option value="any">ANY 任意成立</option>
+                                                <option value="always">ALWAYS 无条件</option>
+                                            </select>
+                                        </div>
+
+                                        @if (output.MatchMode != "always")
+                                        {
+                                            @for (var conditionIndex = 0; conditionIndex < output.Conditions.Count; conditionIndex++)
+                                            {
+                                                var condition = output.Conditions[conditionIndex];
+                                                <div class="condition-editor" @key="condition.Id">
+                                                    <div class="condition-index">条件 @(conditionIndex + 1)</div>
+                                                    <div class="condition-row-a">
+                                                        <select class="select" value="@condition.Left" @onchange="e => ChangeConditionLeft(state.Id, output.Id, condition.Id, e.Value?.ToString() ?? string.Empty)">
+                                                            @if (Machine.Variables.Count == 0)
+                                                            {
+                                                                <option value="">没有变量</option>
+                                                            }
+                                                            else
+                                                            {
+                                                                @foreach (var variable in Machine.Variables)
+                                                                {
+                                                                    <option value="@variable.Name">@variable.Name</option>
+                                                                }
+                                                            }
+                                                        </select>
+                                                        <select class="select" value="@condition.Operator" @onchange='e => ChangeConditionOperator(state.Id, output.Id, condition.Id, e.Value?.ToString() ?? "==")'>
+                                                            @foreach (var op in Operators)
+                                                            {
+                                                                <option value="@op">@op</option>
+                                                            }
+                                                        </select>
+                                                        <button class="remove-btn" @onclick="() => RemoveCondition(state.Id, output.Id, condition.Id)">×</button>
+                                                    </div>
+                                                    <div class="condition-row-b">
+                                                        <select class="select" value="@condition.RightMode" @onchange='e => ChangeConditionRightMode(state.Id, output.Id, condition.Id, e.Value?.ToString() ?? "literal")'>
+                                                            <option value="literal">固定值</option>
+                                                            <option value="variable">全局变量</option>
+                                                        </select>
+                                                        @if (condition.RightMode == "literal")
+                                                        {
+                                                            <select class="select" value="@condition.RightType" @onchange='e => ChangeConditionRightType(state.Id, output.Id, condition.Id, e.Value?.ToString() ?? "string")'>
+                                                                <option value="number">number</option>
+                                                                <option value="string">string</option>
+                                                                <option value="boolean">boolean</option>
+                                                            </select>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div style="display:flex;align-items:center;padding-left:7px;color:#67758d;font-size:9px">与另一个全局变量比较</div>
+                                                        }
+                                                    </div>
+                                                    <div class="condition-row-c">
+                                                        <div style="display:flex;align-items:center;color:#718097;font-size:9px">右值</div>
+                                                        @if (condition.RightMode == "variable")
+                                                        {
+                                                            <select class="select" value="@NodeString(condition.RightValue)" @onchange="e => ChangeConditionRightValue(state.Id, output.Id, condition.Id, e.Value?.ToString() ?? string.Empty)">
+                                                                @if (Machine.Variables.Count == 0)
+                                                                {
+                                                                    <option value="">没有变量</option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    @foreach (var variable in Machine.Variables)
+                                                                    {
+                                                                        <option value="@variable.Name">@variable.Name</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        }
+                                                        else if (condition.RightType == "boolean")
+                                                        {
+                                                            <select class="select" value='@DisplayNode(condition.RightValue, "boolean")' @onchange='e => ChangeConditionRightValue(state.Id, output.Id, condition.Id, e.Value?.ToString() ?? "false")'>
+                                                                <option value="true">true</option>
+                                                                <option value="false">false</option>
+                                                            </select>
+                                                        }
+                                                        else
+                                                        {
+                                                            <input class="input" value="@DisplayNode(condition.RightValue, condition.RightType)" @onchange="e => ChangeConditionRightValue(state.Id, output.Id, condition.Id, e.Value?.ToString() ?? string.Empty)" />
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                            <button class="btn small" style="margin-top:6px" @onclick="() => AddCondition(state.Id, output.Id)">+ 条件</button>
+                                        }
+                                        else
+                                        {
+                                            <div class="hint">无条件出口如果优先级最高，会让后面的出口永远没有机会执行。</div>
+                                        }
+
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <button class="danger" @onclick="DeleteSelectedState">删除整个状态</button>
+                    }
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="bottom">
+        <div class="log-panel">
+            <div class="bottom-header">
+                <div id="runtimeDot" class="status-dot @(Runtime.Running ? "running" : "")"></div>
+                <span id="runtimeStatus">@(Runtime.Running ? "RUNNING" : "STOPPED")</span>
+                <div class="spacer"></div>
+                <button class="btn small" @onclick="ClearLogs">清空</button>
+            </div>
+            <div id="console">
+                @foreach (var log in Logs)
+                {
+                    <div @key="log.Id">
+                        <span class="log-time">@log.Time</span>
+                        <span class="log-@log.Level">[@log.Type]</span>
+                        <span class="log-@log.Level">@log.Message</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="runtime-panel">
+            <div class="bottom-header">运行时</div>
+            <div class="runtime-content">
+                <div id="runtimeRegions" class="runtime-regions">
+                    @foreach (var region in Machine.Regions)
+                    {
+                        var state = GetCurrentState(region.Id);
+                        <div class="runtime-region" @key="region.Id">
+                            <div class="runtime-region-name">@region.Name</div>
+                            <div class="runtime-state-name">@(state?.Name ?? "-")</div>
+                        </div>
+                    }
+                </div>
+                <div id="runtimeVariables" class="runtime-vars">
+                    @foreach (var variable in Machine.Variables)
+                    {
+                        Runtime.Variables.TryGetValue(variable.Name, out var runtimeValue);
+                        <div class="runtime-var-row" @key="variable.Id">
+                            <div class="runtime-var-name">@variable.Name</div>
+                            <div class="runtime-var-type">@variable.Type</div>
+                            @if (variable.Type == "boolean")
+                            {
+                                <select class="runtime-value" value="@DisplayNode(runtimeValue, variable.Type)" @onchange='e => ChangeRuntimeVariable(variable.Id, e.Value?.ToString() ?? "false")'>
+                                    <option value="true">true</option>
+                                    <option value="false">false</option>
+                                </select>
+                            }
+                            else
+                            {
+                                <input class="runtime-value" value="@DisplayNode(runtimeValue, variable.Type)" @onchange="e => ChangeRuntimeVariable(variable.Id, e.Value?.ToString() ?? string.Empty)" />
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@if (_aiDialogOpen)
+{
+    <div class="ai-overlay" @onclick="CloseAiDialog">
+
+        <div class="ai-dialog" @onclick:stopPropagation="true">
+
+            <!-- 顶部 -->
+            <div class="ai-header">
+
+                <div class="ai-header-left">
+                    <div class="ai-logo">✦</div>
+
+                    <div>
+                        <div class="ai-title">AI 逻辑编排</div>
+                        <div class="ai-subtitle">
+                            自动生成状态、变量、条件、动作与流程连线
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-header-actions">
+
+                    <div class="ai-model-badge">
+                        <span class="ai-model-dot"></span>
+                        DeepSeek
+                    </div>
+
+                    @if (_aiMessages.Count > 0)
+                    {
+                        <button class="ai-toolbar-btn"
+                                @onclick="ClearAiConversation"
+                                title="清空对话">
+                            清空对话
+                        </button>
+                    }
+
+                    <button class="ai-close"
+                            @onclick="CloseAiDialog">
+                        ×
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- 对话主体 -->
+            <div class="ai-body">
+
+                @if (_aiMessages.Count == 0 && !_aiBusy)
+                {
+                    <div class="ai-welcome">
+
+                        <div class="ai-welcome-icon">✦</div>
+
+                        <div class="ai-welcome-title">
+                            想怎么编排？
+                        </div>
+
+                        <div class="ai-welcome-desc">
+                            用自然语言描述设备流程，我会自动创建状态机。
+                        </div>
+
+                        <div class="ai-example-grid">
+
+                            <button class="ai-example"
+                                    @onclick='() => SetAiExample("做一个复杂的洗衣机程序，考虑各种自动化。")'>
+                                <strong>洗衣机程序</strong>
+                                <span>设计一个复杂的洗衣机程序</span>
+                            </button>
+
+                            <button class="ai-example"
+                                    @onclick='() => SetAiExample("做一个机器人抓取流程，待机时产品到位开始抓取，抓取完成后返回待机，并增加急停状态。")'>
+                                <strong>机器人流程</strong>
+                                <span>待机、抓取、急停</span>
+                            </button>
+
+                            <button class="ai-example"
+                                    @onclick='() => SetAiExample("做一个输送线流程，有停止、运行、故障三个状态，并自动处理启动、停止和故障信号。")'>
+                                <strong>输送线控制</strong>
+                                <span>运行、停止、故障</span>
+                            </button>
+
+                            <button class="ai-example"
+                                    @onclick='() => SetAiExample("在当前流程基础上增加一个超时报警状态，设备运行超过10秒没有完成就进入报警。")'>
+                                <strong>修改当前流程</strong>
+                                <span>直接修改现有编排</span>
+                            </button>
+
+                        </div>
+
+                    </div>
+                }
+                else
+                {
+                    <div class="ai-message-list">
+
+                        @foreach (var message in _aiMessages)
+                        {
+                            <div class="ai-message-row @message.Role">
+
+                                @if (message.Role == "assistant")
+                                {
+                                    <div class="ai-message-avatar">
+                                        ✦
+                                    </div>
+                                }
+
+                                <div class="ai-message-content">
+
+                                    @if (message.Role == "assistant")
+                                    {
+                                        <div class="ai-message-name">
+                                            AI
+                                        </div>
+                                    }
+
+                                    <div class="ai-message-bubble">
+                                        @message.Text
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+
+                        @if (_aiBusy)
+                        {
+                            <div class="ai-message-row assistant">
+
+                                <div class="ai-message-avatar">
+                                    ✦
+                                </div>
+
+                                <div class="ai-message-content">
+
+                                    <div class="ai-message-name">
+                                        AI
+                                    </div>
+
+                                    <div class="ai-message-bubble ai-loading">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+                }
+
+            </div>
+
+            <!-- 错误 -->
+            @if (!string.IsNullOrWhiteSpace(_aiError))
+            {
+                <div class="ai-error-bar">
+                    <span>!</span>
+                    @_aiError
+                </div>
+            }
+
+            <!-- 待应用编排 -->
+            @if (_pendingAiPlan is not null)
+            {
+                <div class="ai-plan-bar">
+
+                    <div class="ai-plan-icon">
+                        ✓
+                    </div>
+
+                    <div class="ai-plan-info">
+                        <strong>编排已生成</strong>
+                        <span>
+                            @_pendingAiPlan.Regions.Count 个状态域 ·
+                            @_pendingAiPlan.Variables.Count 个变量 ·
+                            @_pendingAiPlan.States.Count 个状态 ·
+                            @_pendingAiPlan.Transitions.Count 条连线
+                        </span>
+                    </div>
+
+                    <button class="btn green"
+                            disabled="@_aiBusy"
+                            @onclick="ApplyPendingAiPlanAsync">
+                        应用到画布
+                    </button>
+
+                </div>
+            }
+
+            <!-- 输入区 -->
+            <div class="ai-composer">
+
+                <div class="ai-composer-box">
+
+                    <textarea class="ai-prompt"
+                              @bind="_aiInput"
+                              @bind:event="oninput"
+                              disabled="@_aiBusy"
+                              placeholder="描述你想要的流程，例如：做一个电机启停流程...">
+                    </textarea>
+
+                    <div class="ai-composer-footer">
+
+                        <div class="ai-composer-hint">
+                            AI 会读取当前变量和可调用 StateAction
+                        </div>
+
+                        <button class="ai-send"
+                                disabled="@(_aiBusy || string.IsNullOrWhiteSpace(_aiInput))"
+                                @onclick="GenerateAiPlanAsync">
+
+                            @if (_aiBusy)
+                            {
+                                <span>处理中</span>
+                            }
+                            else
+                            {
+                                <span>生成</span>
+                                <span class="ai-send-arrow">↑</span>
+                            }
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+
+
+
+<script>
+    (() => {
+        const WORLD_WIDTH = 4000;
+        const WORLD_HEIGHT = 2500;
+        const MIN_ZOOM = 0.25;
+        const MAX_ZOOM = 1.8;
+
+        let dotnet = null;
+        let workspace = null;
+        let world = null;
+        let scaleBox = null;
+        let edgeLayer = null;
+        let tempEdge = null;
+        let canvasZoom = 0.85;
+        let edgeState = { edges: [], selectedEdgeId: null, runningEdgeIds: [], pending: null };
+        let drag = null;
+        let pan = null;
+        let suppressClickUntil = 0;
+        let initialized = false;
+
+        const clampZoom = value => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+
+        function getPortPosition(stateId, portId) {
+            const element = document.querySelector(`.port[data-state-id="${CSS.escape(stateId)}"][data-port-id="${CSS.escape(portId)}"]`);
+            if (!element || !world) return null;
+            const rect = element.getBoundingClientRect();
+            const worldRect = world.getBoundingClientRect();
+            return {
+                x: (rect.left - worldRect.left + rect.width / 2) / canvasZoom,
+                y: (rect.top - worldRect.top + rect.height / 2) / canvasZoom
+            };
+        }
+
+        function bezierPath(x1, y1, x2, y2) {
+            const distance = Math.max(90, Math.abs(x2 - x1) * 0.45);
+            return `M ${x1} ${y1} C ${x1 + distance} ${y1}, ${x2 - distance} ${y2}, ${x2} ${y2}`;
+        }
+
+        function drawEdges() {
+            if (!edgeLayer) return;
+            let html = "";
+            const running = new Set(edgeState.runningEdgeIds || []);
+            for (const edge of edgeState.edges || []) {
+                const start = getPortPosition(edge.fromStateId, edge.fromPortId);
+                const end = getPortPosition(edge.toStateId, edge.toPortId);
+                if (!start || !end) continue;
+                const d = bezierPath(start.x, start.y, end.x, end.y);
+                let cls = "edge";
+                if (edgeState.selectedEdgeId === edge.id) cls += " selected";
+                if (running.has(edge.id)) cls += " running";
+                    let stroke = "#64738a";
+    let strokeWidth = 2;
+    let filter = "";
+
+    if (edgeState.selectedEdgeId === edge.id) {
+        stroke = "#4c8dff";
+        strokeWidth = 3;
+    }
+
+    if (running.has(edge.id)) {
+        stroke = "#2bd59a";
+        strokeWidth = 3;
+        filter = "filter:drop-shadow(0 0 5px rgba(43,213,154,.8));";
+    }
+
+    html += `
+    <path
+        class="${cls}"
+        d="${d}"
+        fill="none"
+        stroke="${stroke}"
+        stroke-width="${strokeWidth}"
+        style="${filter}">
+    </path>`;
+
+    html += `
+    <path
+        class="edge-hit"
+        data-edge-id="${edge.id}"
+        d="${d}"
+        fill="none"
+        stroke="transparent"
+        stroke-width="16"
+        style="pointer-events:stroke;cursor:pointer;">
+    </path>`;
+            }
+            edgeLayer.innerHTML = html;
+        }
+
+        function updatePendingVisual() {
+            document.querySelectorAll(".port.pending").forEach(x => x.classList.remove("pending"));
+            if (!tempEdge) return;
+            const pending = edgeState.pending;
+            if (!pending) {
+                tempEdge.style.display = "none";
+                return;
+            }
+            const port = document.querySelector(`.port[data-state-id="${CSS.escape(pending.stateId)}"][data-port-id="${CSS.escape(pending.portId)}"]`);
+            if (port) port.classList.add("pending");
+            tempEdge.style.display = "block";
+        }
+
+        function updateTempEdge(clientX, clientY) {
+            const pending = edgeState.pending;
+            if (!pending || !tempEdge || !world) return;
+            const start = getPortPosition(pending.stateId, pending.portId);
+            if (!start) return;
+            const rect = world.getBoundingClientRect();
+            const x = (clientX - rect.left) / canvasZoom;
+            const y = (clientY - rect.top) / canvasZoom;
+            tempEdge.setAttribute("d", bezierPath(start.x, start.y, x, y));
+        }
+
+        function setZoom(value, keepCenter = false) {
+            if (!workspace || !world || !scaleBox) return;
+            const oldZoom = canvasZoom;
+            let centerWorldX = 0;
+            let centerWorldY = 0;
+            if (keepCenter) {
+                centerWorldX = (workspace.scrollLeft + workspace.clientWidth / 2) / oldZoom;
+                centerWorldY = (workspace.scrollTop + workspace.clientHeight / 2) / oldZoom;
+            }
+            canvasZoom = clampZoom(Number(value));
+            world.style.transform = `scale(${canvasZoom})`;
+            scaleBox.style.width = `${WORLD_WIDTH * canvasZoom}px`;
+            scaleBox.style.height = `${WORLD_HEIGHT * canvasZoom}px`;
+            const label = document.getElementById("zoomLabel");
+            if (label) label.textContent = `${Math.round(canvasZoom * 100)}%`;
+            if (keepCenter) {
+                workspace.scrollLeft = centerWorldX * canvasZoom - workspace.clientWidth / 2;
+                workspace.scrollTop = centerWorldY * canvasZoom - workspace.clientHeight / 2;
+            }
+            requestAnimationFrame(drawEdges);
+        }
+
+        function fitCanvas() {
+            if (!workspace) return;
+            const cards = [...document.querySelectorAll(".state-card")];
+            if (cards.length === 0) {
+                setZoom(0.85, false);
+                workspace.scrollLeft = 0;
+                workspace.scrollTop = 0;
+                return;
+            }
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (const card of cards) {
+                const x = parseFloat(card.style.left) || 0;
+                const y = parseFloat(card.style.top) || 0;
+                const width = card.offsetWidth || 540;
+                const height = card.offsetHeight || 220;
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x + width);
+                maxY = Math.max(maxY, y + height);
+            }
+            const padding = 120;
+            const width = maxX - minX + padding * 2;
+            const height = maxY - minY + padding * 2;
+            const zoom = clampZoom(Math.min(workspace.clientWidth / width, workspace.clientHeight / height, 1));
+            setZoom(zoom, false);
+            workspace.scrollLeft = Math.max(0, (minX - padding) * zoom);
+            workspace.scrollTop = Math.max(0, (minY - padding) * zoom);
+        }
+
+        function isBackground(target) {
+            return target === workspace || target?.id === "world" || target?.id === "stateLayer" || target?.id === "edgeSvg";
+        }
+
+        function onPointerDown(event) {
+            if (!workspace) return;
+            const header = event.target.closest?.(".state-header");
+            if (header && event.button === 0) {
+                const card = header.closest(".state-card");
+                if (!card) return;
+                drag = {
+                    stateId: card.dataset.stateId,
+                    card,
+                    mouseX: event.clientX,
+                    mouseY: event.clientY,
+                    startX: parseFloat(card.style.left) || 0,
+                    startY: parseFloat(card.style.top) || 0,
+                    x: parseFloat(card.style.left) || 0,
+                    y: parseFloat(card.style.top) || 0,
+                    moved: false
+                };
+                event.preventDefault();
+                return;
+            }
+
+            if (event.button === 1 || (event.button === 0 && isBackground(event.target))) {
+                pan = {
+                    mouseX: event.clientX,
+                    mouseY: event.clientY,
+                    scrollLeft: workspace.scrollLeft,
+                    scrollTop: workspace.scrollTop,
+                    moved: false
+                };
+                workspace.style.cursor = "grabbing";
+                event.preventDefault();
+            }
+        }
+
+        function onPointerMove(event) {
+            if (pan && workspace) {
+                const dx = event.clientX - pan.mouseX;
+                const dy = event.clientY - pan.mouseY;
+                if (Math.abs(dx) + Math.abs(dy) > 3) pan.moved = true;
+                workspace.scrollLeft = pan.scrollLeft - dx;
+                workspace.scrollTop = pan.scrollTop - dy;
+            }
+            if (drag) {
+                const dx = (event.clientX - drag.mouseX) / canvasZoom;
+                const dy = (event.clientY - drag.mouseY) / canvasZoom;
+                drag.x = Math.max(0, drag.startX + dx);
+                drag.y = Math.max(0, drag.startY + dy);
+                if (Math.abs(dx) + Math.abs(dy) > 1) drag.moved = true;
+                if (drag.card?.isConnected) {
+                    drag.card.style.left = `${drag.x}px`;
+                    drag.card.style.top = `${drag.y}px`;
+                }
+                drawEdges();
+            }
+            updateTempEdge(event.clientX, event.clientY);
+        }
+
+        function onPointerUp() {
+            if (pan) {
+                if (pan.moved) suppressClickUntil = Date.now() + 150;
+                pan = null;
+                if (workspace) workspace.style.cursor = "";
+            }
+            if (drag) {
+                const finished = drag;
+                drag = null;
+                if (finished.moved) {
+                    suppressClickUntil = Date.now() + 150;
+                    dotnet?.invokeMethodAsync("StateMoved", finished.stateId, finished.x, finished.y);
+                }
+            }
+        }
+
+        function onClick(event) {
+            if (Date.now() < suppressClickUntil) return;
+            const edge = event.target.closest?.(".edge-hit");
+            if (edge?.dataset.edgeId) {
+                event.stopPropagation();
+                dotnet?.invokeMethodAsync("SelectEdgeFromJs", edge.dataset.edgeId);
+                return;
+            }
+            if (event.target.closest?.(".port,.add-port,button,input,select,textarea,label")) return;
+            const card = event.target.closest?.(".state-card");
+            if (card?.dataset.stateId) {
+                dotnet?.invokeMethodAsync("SelectStateFromJs", card.dataset.stateId);
+                return;
+            }
+            if (isBackground(event.target)) dotnet?.invokeMethodAsync("ClearSelectionFromJs");
+        }
+
+        function onWheel(event) {
+            if (!workspace || (!event.ctrlKey && !event.metaKey)) return;
+            event.preventDefault();
+            const rect = workspace.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+            const worldX = (workspace.scrollLeft + mouseX) / canvasZoom;
+            const worldY = (workspace.scrollTop + mouseY) / canvasZoom;
+            const factor = event.deltaY < 0 ? 1.1 : 0.9;
+            const newZoom = clampZoom(canvasZoom * factor);
+            setZoom(newZoom, false);
+            workspace.scrollLeft = worldX * newZoom - mouseX;
+            workspace.scrollTop = worldY * newZoom - mouseY;
+        }
+
+        function onKeyDown(event) {
+            const tag = document.activeElement?.tagName;
+            if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+            if (event.key === "Delete") dotnet?.invokeMethodAsync("DeleteSelectionFromJs");
+            if (event.key === "Escape") dotnet?.invokeMethodAsync("EscapeFromJs");
+        }
+
+        window.industrialStateMachineUi = {
+            init(dotnetRef) {
+                dotnet = dotnetRef;
+                workspace = document.getElementById("workspace");
+                world = document.getElementById("world");
+                scaleBox = document.getElementById("worldScale");
+                edgeLayer = document.getElementById("edgeLayer");
+                tempEdge = document.getElementById("tempEdge");
+                if (initialized) return;
+                initialized = true;
+                workspace?.addEventListener("pointerdown", onPointerDown);
+                workspace?.addEventListener("click", onClick);
+                workspace?.addEventListener("wheel", onWheel, { passive: false });
+                workspace?.addEventListener("scroll", drawEdges);
+                window.addEventListener("pointermove", onPointerMove);
+                window.addEventListener("pointerup", onPointerUp);
+                window.addEventListener("keydown", onKeyDown);
+                window.addEventListener("resize", drawEdges);
+            },
+            dispose() {
+                if (!initialized) return;
+                workspace?.removeEventListener("pointerdown", onPointerDown);
+                workspace?.removeEventListener("click", onClick);
+                workspace?.removeEventListener("wheel", onWheel);
+                workspace?.removeEventListener("scroll", drawEdges);
+                window.removeEventListener("pointermove", onPointerMove);
+                window.removeEventListener("pointerup", onPointerUp);
+                window.removeEventListener("keydown", onKeyDown);
+                window.removeEventListener("resize", drawEdges);
+                initialized = false;
+                dotnet = null;
+            },
+            sync(state) {
+                edgeState = state || edgeState;
+                updatePendingVisual();
+                requestAnimationFrame(drawEdges);
+            },
+            setZoom(value, keepCenter) { setZoom(value, !!keepCenter); },
+            adjustZoom(delta, keepCenter) { setZoom(canvasZoom + Number(delta), !!keepCenter); },
+            fitCanvas,
+            getAddStatePosition() {
+                if (!workspace) return { x: 280, y: 140 };
+                return {
+                    x: (workspace.scrollLeft + 280) / canvasZoom,
+                    y: (workspace.scrollTop + 140) / canvasZoom
+                };
+            },
+            setInitialScroll(left, top) {
+                if (!workspace) return;
+                workspace.scrollLeft = Number(left) || 0;
+                workspace.scrollTop = Number(top) || 0;
+            },
+            scrollConsoleToBottom() {
+                const box = document.getElementById("console");
+                if (box) box.scrollTop = box.scrollHeight;
+            },
+            downloadText(filename, text, mime) {
+                const blob = new Blob([text], { type: mime || "text/plain" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            },
+            storage: {
+                list(prefix) {
+                    const keys = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith(prefix)) keys.push(key.substring(prefix.length));
+                    }
+                    return keys.sort((a, b) => a.localeCompare(b, "zh-CN"));
+                },
+                set(key, value) { localStorage.setItem(key, value); },
+                get(key) { return localStorage.getItem(key); },
+                remove(key) { localStorage.removeItem(key); }
+            }
+        };
+    })();
+</script>
