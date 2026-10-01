@@ -12,7 +12,6 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
-
 public sealed class StateHotActionEngine : IDisposable
 {
     private readonly string _directory;
@@ -277,8 +276,7 @@ public sealed class StateHotActionEngine : IDisposable
                 .GroupBy(
                     x => x.Name,
                     StringComparer.Ordinal)
-                .FirstOrDefault(
-                    x => x.Count() > 1);
+                .FirstOrDefault(x => x.Count() > 1);
 
         if (duplicate is not null)
         {
@@ -434,8 +432,7 @@ public sealed class HotActionDefinition
         "二次开发";
 
     public List<HotActionParameterDefinition>
-        Parameters
-    { get; set; } = new();
+        Parameters { get; set; } = new();
 
     public string Script { get; set; } =
         string.Empty;
@@ -468,7 +465,6 @@ public sealed class HotActionParameterDefinition
     public List<string> EnumValues { get; set; } =
         new();
 }
-
 
 // ============================================================
 // 热更新脚本 API
@@ -511,7 +507,6 @@ public sealed class StateScriptApi
     }
 }
 
-
 // ============================================================
 // Var.xxx
 // ============================================================
@@ -542,8 +537,8 @@ public sealed class StateScriptVariableApi
         return TryNumber(
             Primitive(_get(name)),
             out var number)
-                ? number
-                : 0d;
+            ? number
+            : 0d;
     }
 
     public string Text(
@@ -819,7 +814,6 @@ public sealed class StateScriptVariableApi
     }
 }
 
-
 // ============================================================
 // Log.xxx
 // ============================================================
@@ -880,8 +874,8 @@ public sealed class StateScriptLogApi
             message is JsonNode node
                 ? node.ToJsonString()
                 : Convert.ToString(
-                    message,
-                    CultureInfo.InvariantCulture)
+                      message,
+                      CultureInfo.InvariantCulture)
                   ?? string.Empty;
 
         _write(
@@ -892,7 +886,6 @@ public sealed class StateScriptLogApi
         return message;
     }
 }
-
 
 // ============================================================
 // 脚本执行器
@@ -1059,9 +1052,7 @@ internal static class StateActionScriptRunner
     {
         object target = api;
 
-        for (var i = 0;
-             i < path.Count - 1;
-             i++)
+        for (var i = 0; i < path.Count - 1; i++)
         {
             var property =
                 target.GetType()
@@ -1094,10 +1085,7 @@ internal static class StateActionScriptRunner
 
         foreach (var method in methods)
         {
-            if (!TryBuildArguments(
-                    method,
-                    arguments,
-                    out var converted))
+            if (!TryBuildArguments(method, arguments, out var converted))
             {
                 continue;
             }
@@ -1106,60 +1094,42 @@ internal static class StateActionScriptRunner
 
             try
             {
-                result =
-                    method.Invoke(
-                        target,
-                        converted);
+                result = method.Invoke(target, converted);
             }
-            catch (TargetInvocationException ex)
-                when (ex.InnerException is not null)
+            catch (TargetInvocationException ex) when (ex.InnerException is not null)
             {
                 throw ex.InnerException;
             }
 
-            if (result is Task task)
-            {
-                await task;
+            if (result is not Task task) return result;
+            await task;
 
-                return task.GetType()
-                    .GetProperty("Result")
-                    ?.GetValue(task);
-            }
-
-            return result;
+            return task.GetType()
+                .GetProperty("Result")
+                ?.GetValue(task);
         }
 
         throw new InvalidOperationException(
             $"找不到脚本 API：{string.Join('.', path)}({arguments.Length} 参数)");
     }
 
-    private static bool TryBuildArguments(
-        MethodInfo method,
-        object?[] source,
-        out object?[] converted)
+    private static bool TryBuildArguments(MethodInfo method, object?[] source, out object?[] converted)
     {
-        var parameters =
-            method.GetParameters();
+        var parameters = method.GetParameters();
 
-        var required =
-            parameters.Count(
-                x => !x.HasDefaultValue);
+        var required = parameters.Count(x => !x.HasDefaultValue);
 
         if (source.Length < required ||
             source.Length > parameters.Length)
         {
-            converted =
-                Array.Empty<object?>();
+            converted = [];
 
             return false;
         }
 
-        converted =
-            new object?[parameters.Length];
+        converted = new object?[parameters.Length];
 
-        for (var i = 0;
-             i < parameters.Length;
-             i++)
+        for (var i = 0; i < parameters.Length; i++)
         {
             if (i >= source.Length)
             {
@@ -1181,17 +1151,11 @@ internal static class StateActionScriptRunner
         return true;
     }
 
-    private static bool TryConvert(
-        object? value,
-        Type targetType,
-        out object? converted)
+    private static bool TryConvert(object? value, Type targetType, out object? converted)
     {
-        var nullable =
-            Nullable.GetUnderlyingType(
-                targetType);
+        var nullable = Nullable.GetUnderlyingType(targetType);
 
-        var type =
-            nullable ?? targetType;
+        var type = nullable ?? targetType;
 
         if (value is null)
         {
@@ -1206,8 +1170,7 @@ internal static class StateActionScriptRunner
             return false;
         }
 
-        if (type == typeof(object) ||
-            type.IsInstanceOfType(value))
+        if (type == typeof(object) || type.IsInstanceOfType(value))
         {
             converted = value;
             return true;
@@ -1235,36 +1198,20 @@ internal static class StateActionScriptRunner
                     value is bool b
                         ? b
                         : text == "1" ||
-                          text.Equals(
-                              "true",
-                              StringComparison.OrdinalIgnoreCase);
+                          text.Equals("true", StringComparison.OrdinalIgnoreCase);
             }
             else if (type == typeof(JsonNode))
             {
-                converted =
-                    value is JsonNode node
-                        ? node
-                        : JsonSerializer.SerializeToNode(
-                            value);
+                converted = value is JsonNode node ? node : JsonSerializer.SerializeToNode(value);
             }
             else if (type.IsEnum)
             {
-                converted =
-                    Enum.Parse(
-                        type,
-                        Convert.ToString(
-                            value,
-                            CultureInfo.InvariantCulture)
-                        ?? string.Empty,
-                        true);
+                converted = Enum.Parse(type, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty,
+                    true);
             }
             else
             {
-                converted =
-                    Convert.ChangeType(
-                        value,
-                        type,
-                        CultureInfo.InvariantCulture);
+                converted = Convert.ChangeType(value, type, CultureInfo.InvariantCulture);
             }
 
             return true;
@@ -1276,15 +1223,12 @@ internal static class StateActionScriptRunner
         }
     }
 
-    private static int FindCallOpenParen(
-        string text)
+    private static int FindCallOpenParen(string text)
     {
         var quote = '\0';
         var escape = false;
 
-        for (var i = 0;
-             i < text.Length;
-             i++)
+        for (var i = 0; i < text.Length; i++)
         {
             var c = text[i];
 
@@ -1304,34 +1248,29 @@ internal static class StateActionScriptRunner
                 continue;
             }
 
-            if (c is '"' or '\'')
+            switch (c)
             {
-                quote = c;
-                continue;
+                case '"' or '\'':
+                    quote = c;
+                    continue;
+                case '(':
+                    return i;
             }
-
-            if (c == '(')
-                return i;
         }
 
         return -1;
     }
 
-    private static List<string> SplitTopLevel(
-        string text,
-        char separator)
+    private static List<string> SplitTopLevel(string text, char separator)
     {
-        var result =
-            new List<string>();
+        var result = new List<string>();
 
         var start = 0;
         var depth = 0;
         var quote = '\0';
         var escape = false;
 
-        for (var i = 0;
-             i < text.Length;
-             i++)
+        for (var i = 0; i < text.Length; i++)
         {
             var c = text[i];
 
@@ -1343,35 +1282,32 @@ internal static class StateActionScriptRunner
 
             if (quote != '\0')
             {
-                if (c == '\\')
-                    escape = true;
-                else if (c == quote)
-                    quote = '\0';
-
+                if (c == '\\') escape = true;
+                else if (c == quote) quote = '\0';
                 continue;
             }
 
-            if (c is '"' or '\'')
+            switch (c)
             {
-                quote = c;
-                continue;
-            }
+                case '"' or '\'':
+                    quote = c;
+                    continue;
+                case '(':
+                    depth++;
+                    break;
+                case ')':
+                    depth--;
+                    break;
+                default:
+                {
+                    if (c == separator && depth == 0)
+                    {
+                        result.Add(text[start..i]);
+                        start = i + 1;
+                    }
 
-            if (c == '(')
-            {
-                depth++;
-            }
-            else if (c == ')')
-            {
-                depth--;
-            }
-            else if (c == separator &&
-                     depth == 0)
-            {
-                result.Add(
-                    text[start..i]);
-
-                start = i + 1;
+                    break;
+                }
             }
         }
 
@@ -1384,14 +1320,10 @@ internal static class StateActionScriptRunner
         return result;
     }
 
-    private static string Unescape(
-        string text)
+    private static string Unescape(string text)
     {
-        var builder =
-            new StringBuilder();
-
+        var builder = new StringBuilder();
         var escape = false;
-
         foreach (var c in text)
         {
             if (!escape)
@@ -1418,9 +1350,7 @@ internal static class StateActionScriptRunner
             escape = false;
         }
 
-        if (escape)
-            builder.Append('\\');
-
+        if (escape) builder.Append('\\');
         return builder.ToString();
     }
 }

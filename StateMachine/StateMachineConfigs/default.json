@@ -1,53 +1,270 @@
 ﻿{
   "regions": [
     {
-      "id": "region_9786e42d52f34fb08f6c8bdae7080f45",
-      "name": "\u673A\u5668\u4EBA"
+      "id": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u4E3B\u63A7\u6D41\u7A0B"
     },
     {
-      "id": "region_c77fcb7514784b428671126d7767bc41",
-      "name": "\u8F93\u9001\u7EBF"
+      "id": "region_ff584afb4d944f39be11bc625c1cd06a",
+      "name": "\u6C34\u4F4D\u63A7\u5236"
+    },
+    {
+      "id": "region_98eae03b9ac84f90acb047e0bdff5ca8",
+      "name": "\u6E29\u5EA6\u63A7\u5236"
+    },
+    {
+      "id": "region_8a94479f27044971a526a46fea602a9b",
+      "name": "\u7535\u673A\u63A7\u5236"
+    },
+    {
+      "id": "region_9d917ef792a9423d8d95041030156f28",
+      "name": "\u95E8\u9501\u63A7\u5236"
+    },
+    {
+      "id": "region_09561926b703491299d35bdc304244e3",
+      "name": "\u5B89\u5168\u63A7\u5236"
     }
   ],
   "variables": [
     {
-      "id": "variable_b4cc5f28f54740c8935cc1e62f8040cc",
-      "name": "ProductReady",
+      "id": "variable_2efb83b7a0d843ab9f9ce116d77ef78c",
+      "name": "StartButton",
+      "address": "",
       "type": "boolean",
       "value": false
     },
     {
-      "id": "variable_0313d68df1fe4f2fa7af7c2ceaec85f8",
-      "name": "ConveyorReady",
+      "id": "variable_c3095be9a36c4c7488176e7a7559750b",
+      "name": "EmergencyStop",
+      "address": "",
       "type": "boolean",
       "value": false
     },
     {
-      "id": "variable_adf144b504ad46b2adffa46c002abe8b",
-      "name": "RobotDone",
+      "id": "variable_b67bf3011b3b44d1b0c7556e6968b701",
+      "name": "DoorLocked",
+      "address": "",
       "type": "boolean",
       "value": false
     },
     {
-      "id": "variable_40133db0bcb645e9a108652dd28aefba",
-      "name": "Emergency",
-      "type": "boolean",
-      "value": false
+      "id": "variable_4d80ffba6da343168cc5316b84ba8dc8",
+      "name": "CycleMode",
+      "address": "",
+      "type": "string",
+      "value": "normal"
     },
     {
-      "id": "variable_7b31a3c6b2204cc1bb6ad342459b6034",
-      "name": "Temperature",
+      "id": "variable_4092f58ee7244c7b8358f8adbf17ac8d",
+      "name": "LoadWeight",
+      "address": "",
       "type": "number",
-      "value": 30
+      "value": 4.5
+    },
+    {
+      "id": "variable_3f82dd601f0049a79be75d8a1e0ac6c4",
+      "name": "Phase",
+      "address": "",
+      "type": "string",
+      "value": "idle"
+    },
+    {
+      "id": "variable_16856a44af5d4d1ba894ae8ec50a863c",
+      "name": "TargetWaterLevel",
+      "address": "",
+      "type": "number",
+      "value": 45
+    },
+    {
+      "id": "variable_b66bc3d45f9d45a48edc8eee17ec9443",
+      "name": "CurrentWaterLevel",
+      "address": "",
+      "type": "number",
+      "value": 0
+    },
+    {
+      "id": "variable_f2e055d7263041249dfa7e91aeb2233f",
+      "name": "WaterLevelOk",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_f4e1d7b32dcf4b179c0d2faed07a4753",
+      "name": "DrainDone",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_f0b7c600a2f647d59966988b7b7cf244",
+      "name": "WaterInletValveOpen",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_0f10c1d8d9e04858aee71da8a89671f5",
+      "name": "DrainValveOpen",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_289c89db140e43fd8de599fc8fc3cc74",
+      "name": "TargetTemperature",
+      "address": "",
+      "type": "number",
+      "value": 35
+    },
+    {
+      "id": "variable_8c2e177ce64f4bb8ba5a09047bdbed85",
+      "name": "CurrentTemperature",
+      "address": "",
+      "type": "number",
+      "value": 22
+    },
+    {
+      "id": "variable_8107f39023534b12a07c5209f728452c",
+      "name": "TemperatureOk",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_a1f913f225ac454287ab0a9518ab1994",
+      "name": "HeaterOn",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_14c20993f7f847feaae4418451c0e9f9",
+      "name": "WashDuration",
+      "address": "",
+      "type": "number",
+      "value": 90
+    },
+    {
+      "id": "variable_80e5b31348204580a732dbad2ebeb373",
+      "name": "WashProgress",
+      "address": "",
+      "type": "number",
+      "value": 0
+    },
+    {
+      "id": "variable_2082c7624f2b468ab7f40081ac406fcb",
+      "name": "RinseCount",
+      "address": "",
+      "type": "number",
+      "value": 0
+    },
+    {
+      "id": "variable_b2505097568244f681adc1904fe5f67a",
+      "name": "TargetRinses",
+      "address": "",
+      "type": "number",
+      "value": 2
+    },
+    {
+      "id": "variable_a18961e206d34dacae145b2073d0e5e0",
+      "name": "RinseDuration",
+      "address": "",
+      "type": "number",
+      "value": 25
+    },
+    {
+      "id": "variable_e89664d570ff4f64b1fd76746b86f39d",
+      "name": "RinseWashProgress",
+      "address": "",
+      "type": "number",
+      "value": 0
+    },
+    {
+      "id": "variable_3112a69a30bc429fb0129e572b177184",
+      "name": "SpinDuration",
+      "address": "",
+      "type": "number",
+      "value": 60
+    },
+    {
+      "id": "variable_36e0589d4a7143b2a3672a6ab8e68b68",
+      "name": "SpinProgress",
+      "address": "",
+      "type": "number",
+      "value": 0
+    },
+    {
+      "id": "variable_9076396cc63c499c9c56395e46b41a28",
+      "name": "TargetSpinSpeed",
+      "address": "",
+      "type": "number",
+      "value": 800
+    },
+    {
+      "id": "variable_8ef2fd768fe047a19f5edd208f7ba3c9",
+      "name": "CurrentSpinSpeed",
+      "address": "",
+      "type": "number",
+      "value": 0
+    },
+    {
+      "id": "variable_599ce61671e1454f8405f0871f602978",
+      "name": "MotorRunning",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_dff12212ab0c42e394f6ea0805e008c1",
+      "name": "DetergentAdded",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_588014a24fb94c9bace7835ceb5809e2",
+      "name": "FoamDetected",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_42ea7da8f0b84c71b87ea53846b57abc",
+      "name": "UnbalanceDetected",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_d9688beab2a943a5b05620986ea74cab",
+      "name": "CycleComplete",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_4077717db27e46fab583bd5dc0e93bb6",
+      "name": "AntiCreaseDone",
+      "address": "",
+      "type": "boolean",
+      "value": false
+    },
+    {
+      "id": "variable_c16efcd664cf49a6926c97f77083ccc3",
+      "name": "FaultCode",
+      "address": "",
+      "type": "string",
+      "value": ""
     }
   ],
   "states": [
     {
-      "id": "state_aa548abd7d584130a477b67fbf3766f4",
-      "regionId": "region_9786e42d52f34fb08f6c8bdae7080f45",
-      "name": "\u673A\u5668\u4EBA\u5F85\u673A",
+      "id": "state_93d2ecc5efab44b7858d199959d2566e",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u7A7A\u95F2\u5F85\u542F\u52A8",
       "x": 180,
-      "y": 150,
+      "y": 130,
       "isStart": true,
       "beforeLeaveAction": {
         "actionMethod": "",
@@ -63,207 +280,58 @@
       },
       "inputs": [
         {
-          "id": "input_ec0c01472acb4ec9ba4c97f629a2fa91",
-          "name": "\u8FD4\u56DE\u5F85\u673A"
+          "id": "input_b4c438cc58ec4563a8f7e29bbe0ae6de",
+          "name": "\u590D\u4F4D"
         },
         {
-          "id": "input_120ca33e00eb4414bad85887fcbddc3c",
-          "name": "\u5DE5\u4F5C\u5B8C\u6210"
+          "id": "input_f5f10e86558546c685c40985e3b8f5eb",
+          "name": "\u6545\u969C\u6D88\u9664"
         }
       ],
       "outputs": [
         {
-          "id": "output_c347c1f9af9e4c09b80bea1a28ee978d",
-          "name": "\u5F00\u59CB\u6293\u53D6",
-          "matchMode": "all",
-          "conditions": [
-            {
-              "id": "condition_65c4beef79dd4e4ca38d7f98581c55e9",
-              "left": "ProductReady",
-              "operator": "==",
-              "rightMode": "literal",
-              "rightType": "boolean",
-              "rightValue": true
-            },
-            {
-              "id": "condition_0dda5e7538d74c6eb570f3ccf8dc9bcd",
-              "left": "ConveyorReady",
-              "operator": "==",
-              "rightMode": "literal",
-              "rightType": "boolean",
-              "rightValue": true
-            },
-            {
-              "id": "condition_aaf3ffd5aca94a448e094f108dde9aa2",
-              "left": "Emergency",
-              "operator": "==",
-              "rightMode": "literal",
-              "rightType": "boolean",
-              "rightValue": false
-            }
-          ],
-          "actionMethod": "",
-          "actionArguments": [],
-          "actionPath": "",
-          "actionArgs": "[]"
-        },
-        {
-          "id": "output_aefb8bbd7ffd4152969e3caeda5f656e",
-          "name": "\u7D27\u6025\u505C\u6B62",
-          "matchMode": "all",
-          "conditions": [
-            {
-              "id": "condition_8302c05e016a465ebd33d396c4e67659",
-              "left": "Emergency",
-              "operator": "==",
-              "rightMode": "literal",
-              "rightType": "boolean",
-              "rightValue": true
-            }
-          ],
-          "actionMethod": "",
-          "actionArguments": [],
-          "actionPath": "",
-          "actionArgs": "[]"
-        }
-      ]
-    },
-    {
-      "id": "state_86fd892dedea48cc90b1a328b7644b13",
-      "regionId": "region_9786e42d52f34fb08f6c8bdae7080f45",
-      "name": "\u673A\u5668\u4EBA\u6293\u53D6\u4E2D",
-      "x": 850,
-      "y": 120,
-      "isStart": false,
-      "beforeLeaveAction": {
-        "actionMethod": "",
-        "actionArguments": []
-      },
-      "loopAction": {
-        "actionMethod": "",
-        "actionArguments": []
-      },
-      "afterEnterAction": {
-        "actionMethod": "",
-        "actionArguments": []
-      },
-      "inputs": [
-        {
-          "id": "input_c64340353713497ebc87d925b7bc324f",
-          "name": "\u542F\u52A8\u6293\u53D6"
-        },
-        {
-          "id": "input_0c6d8f1b4dac4156a4b8b548fbe8b08a",
-          "name": "\u91CD\u65B0\u8FDB\u5165"
-        }
-      ],
-      "outputs": [
-        {
-          "id": "output_c8679bb9080145a785c4aa7e915296e6",
-          "name": "\u6293\u53D6\u5B8C\u6210",
-          "matchMode": "all",
-          "conditions": [
-            {
-              "id": "condition_cbd7e34fa76e4efdb31d20efc2aacc2b",
-              "left": "RobotDone",
-              "operator": "==",
-              "rightMode": "literal",
-              "rightType": "boolean",
-              "rightValue": true
-            }
-          ],
-          "actionMethod": "",
-          "actionArguments": [],
-          "actionPath": "",
-          "actionArgs": "[]"
-        }
-      ]
-    },
-    {
-      "id": "state_f40a9fc6fab44a2ab1bc1db006d3c13e",
-      "regionId": "region_9786e42d52f34fb08f6c8bdae7080f45",
-      "name": "\u673A\u5668\u4EBA\u6025\u505C",
-      "x": 850,
-      "y": 500,
-      "isStart": false,
-      "beforeLeaveAction": {
-        "actionMethod": "",
-        "actionArguments": []
-      },
-      "loopAction": {
-        "actionMethod": "",
-        "actionArguments": []
-      },
-      "afterEnterAction": {
-        "actionMethod": "",
-        "actionArguments": []
-      },
-      "inputs": [
-        {
-          "id": "input_ebcb2d04980b4265a2cb216b182d6c8e",
-          "name": "\u6025\u505C\u8FDB\u5165"
-        }
-      ],
-      "outputs": [
-        {
-          "id": "output_0a268d79fc774d4a899c659ca9b3977e",
-          "name": "\u89E3\u9664\u6025\u505C",
-          "matchMode": "all",
-          "conditions": [
-            {
-              "id": "condition_f3cc78f1d92947ce947f93309cfcba53",
-              "left": "Emergency",
-              "operator": "==",
-              "rightMode": "literal",
-              "rightType": "boolean",
-              "rightValue": false
-            }
-          ],
-          "actionMethod": "",
-          "actionArguments": [],
-          "actionPath": "",
-          "actionArgs": "[]"
-        }
-      ]
-    },
-    {
-      "id": "state_72ec4fb4828f4c9d9984997ba20160fc",
-      "regionId": "region_c77fcb7514784b428671126d7767bc41",
-      "name": "\u8F93\u9001\u7EBF\u505C\u6B62",
-      "x": 180,
-      "y": 900,
-      "isStart": true,
-      "beforeLeaveAction": {
-        "actionMethod": "",
-        "actionArguments": []
-      },
-      "loopAction": {
-        "actionMethod": "",
-        "actionArguments": []
-      },
-      "afterEnterAction": {
-        "actionMethod": "",
-        "actionArguments": []
-      },
-      "inputs": [
-        {
-          "id": "input_cade54e7e7f6415abde67b8f133fbb72",
-          "name": "\u8FDB\u5165"
-        },
-        {
-          "id": "input_47c62a28ddb141a997c5a91fd34fe3ed",
-          "name": "\u8FD0\u884C\u5B8C\u6210"
-        }
-      ],
-      "outputs": [
-        {
-          "id": "output_9c286ed40a67443b99e47358dc24a5b8",
+          "id": "output_2496abd7df3e404da92ceb03ce369bb3",
           "name": "\u542F\u52A8",
           "matchMode": "all",
           "conditions": [
             {
-              "id": "condition_f520c2b5433040bf94088dd8c6a57c69",
-              "left": "ProductReady",
+              "id": "condition_1f9a5fe831654cc98d2098497db79b32",
+              "left": "StartButton",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_1b632a0cc55e4fb394b0831f3c91e8f9",
+              "left": "DoorLocked",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_2dba985d3ca042dca43a425e96c60013",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": false
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_888693adbf4b49e1b218a831bc4990c6",
+          "name": "\u6025\u505C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_6a6477c57a294fc081bfaeacdd5a6d4c",
+              "left": "EmergencyStop",
               "operator": "==",
               "rightMode": "literal",
               "rightType": "boolean",
@@ -278,12 +346,737 @@
       ]
     },
     {
-      "id": "state_05d29c6710da4c5ebaa161f7807f462a",
-      "regionId": "region_c77fcb7514784b428671126d7767bc41",
-      "name": "\u8F93\u9001\u7EBF\u8FD0\u884C",
-      "x": 850,
-      "y": 900,
+      "id": "state_db33ff0a0e33470ca65d5bc8da8c2a52",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u542F\u52A8\u51C6\u5907",
+      "x": 830,
+      "y": 130,
       "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.PrepareCycle",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_8d72d94d34bd4dc39af747da07a5ffbc",
+          "name": "\u542F\u52A8"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_acd8b3cec0704d008a81384fdf001cc9",
+          "name": "\u51C6\u5907\u5B8C\u6210",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_a857bc60eee24baf8235c1d214901596",
+              "left": "Phase",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "filling"
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_b3ebd31d5a8e4dc3b55c195caa0f6b64",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u4E3B\u8FDB\u6C34",
+      "x": 1480,
+      "y": 130,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.StartFilling",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_9e88983b232144869406f3db5ea134dd",
+          "name": "\u51C6\u5907\u5B8C\u6210"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_3dcbbb740f6e47f684bb8374346a51e2",
+          "name": "\u8FDB\u6C34\u5B8C\u6210",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_71762e2dfdfc46828a3cba4711ab9de7",
+              "left": "WaterLevelOk",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_8dbe874c986248b9b60971a83c8374d6",
+              "left": "TemperatureOk",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_7a29d959650b4138a2cdd00dc54244be",
+          "name": "\u6545\u969C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_a8dcad4583a04b90baf7eb085aba2f5a",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_7aeaff338383413e8a0794882fd722a9",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u4E3B\u6D17\u6DA4",
+      "x": 2130,
+      "y": 130,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.StartWashing",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_5d4697db9c2743398fcf8d273f13862d",
+          "name": "\u8FDB\u6C34\u5B8C\u6210"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_2137a3c284144cf88863c52ecf44bbbf",
+          "name": "\u6D17\u6DA4\u5B8C\u6210",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_2e5b0e957def4918b190ce34873efc4e",
+              "left": "WashProgress",
+              "operator": "\u003E=",
+              "rightMode": "literal",
+              "rightType": "number",
+              "rightValue": 90
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_bc9c3ddffb364f149338681e43a9f819",
+          "name": "\u6545\u969C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_f573160856014063ad671d71243486d1",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_e2faee0379e44646aa9878398c9f7130",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u4E3B\u6392\u6C34",
+      "x": 180,
+      "y": 520,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.StartDraining",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_a8b257798ecc4e1bb5de8630de1cf5d7",
+          "name": "\u6D17\u6DA4\u5B8C\u6210"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_e7da2542de424eeab326c1b9eee07a81",
+          "name": "\u53BB\u6F02\u6D17",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_5501e641e5d9411087e041d67781d047",
+              "left": "DrainDone",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_c442d26c06dc4146861389052ba6dbf3",
+              "left": "RinseCount",
+              "operator": "\u003C",
+              "rightMode": "literal",
+              "rightType": "number",
+              "rightValue": 2
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_71dce1eede0c474e8e93d2cc847d6352",
+          "name": "\u53BB\u8131\u6C34",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_9adda8ae092f4c1f811397fc486eed07",
+              "left": "DrainDone",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_52d30095a1314c26bec1d43c68f4e42c",
+              "left": "RinseCount",
+              "operator": "\u003E=",
+              "rightMode": "literal",
+              "rightType": "number",
+              "rightValue": 2
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_3d7b89d00bf7480299078f57764b33ab",
+          "name": "\u6545\u969C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_988de35489914499bc5b7b6821d7fcd2",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_34fbb1e5822b4202b919cde980f18e97",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u6F02\u6D17\u8FDB\u6C34",
+      "x": 830,
+      "y": 520,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.BeginRinseFill",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_e7e2597193004b069744b1b5bb9ae6fa",
+          "name": "\u53BB\u6F02\u6D17"
+        },
+        {
+          "id": "input_0c5599fc180e484d821c6b0772594f74",
+          "name": "\u7EE7\u7EED\u6F02\u6D17"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_922066b4f24f4f80b9b1e610be3db2bd",
+          "name": "\u6F02\u6D17\u8FDB\u6C34\u5B8C\u6210",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_4f282d49a89c4eaab8754dadb6ab87ab",
+              "left": "WaterLevelOk",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_7b8da761b8ef488c94c519c581d4f6c2",
+          "name": "\u6545\u969C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_9979157b65f64b87943ea27a27d4cde2",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_e22c4d9bc4604c21ab5963068bbb1cca",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u6F02\u6D17\u6D17\u6DA4",
+      "x": 1480,
+      "y": 520,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.StartRinseWash",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_afcc02cceb794c97860280c4f620a722",
+          "name": "\u6F02\u6D17\u8FDB\u6C34\u5B8C\u6210"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_90372a7cecdd405f8cf4e3cd6d746cdd",
+          "name": "\u6F02\u6D17\u6D17\u6DA4\u5B8C\u6210",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_11f0e6df8acb4c38a694ef5a6e766dce",
+              "left": "RinseWashProgress",
+              "operator": "\u003E=",
+              "rightMode": "literal",
+              "rightType": "number",
+              "rightValue": 25
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_d585ad5f076d46d790fcb6a95674981e",
+          "name": "\u6545\u969C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_17d267f3a05545ed9be330555e2e8cd3",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_b50dafe8a92c4069827b53cea648e207",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u6F02\u6D17\u6392\u6C34",
+      "x": 2130,
+      "y": 520,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.StartDraining",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_6f233360b0764e76a913005a4ecd07ba",
+          "name": "\u6F02\u6D17\u6D17\u6DA4\u5B8C\u6210"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_6244f79af13f45d2ace58b14b28d41d9",
+          "name": "\u7EE7\u7EED\u6F02\u6D17",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_78fcd6e2b67044d3873246c94a454142",
+              "left": "DrainDone",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_abe0c8133783429c9cd922e161199982",
+              "left": "RinseCount",
+              "operator": "\u003C",
+              "rightMode": "literal",
+              "rightType": "number",
+              "rightValue": 2
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_992dd73dd0c74f9ca5a15e1834bf6476",
+          "name": "\u6F02\u6D17\u540E\u6392\u7A7A\u53BB\u8131\u6C34",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_20acee039cd54178a89c7ffdd5cae2a9",
+              "left": "DrainDone",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_7b65aab380394724a6a9cd95f2f02342",
+              "left": "RinseCount",
+              "operator": "\u003E=",
+              "rightMode": "literal",
+              "rightType": "number",
+              "rightValue": 2
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_9f34b09569b44537bbe41e1ba05c0891",
+          "name": "\u6545\u969C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_e9dfaa329c524c5dbb0ad29623969879",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_ffb29c3d92bb4bbd85d03cb530c52b8b",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u8131\u6C34",
+      "x": 180,
+      "y": 910,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.StartSpinning",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_5b055afa828c45b9a7cc9fd4083f4af3",
+          "name": "\u53BB\u8131\u6C34"
+        },
+        {
+          "id": "input_7a9737cb349f4556889b5d8be50d6968",
+          "name": "\u6F02\u6D17\u540E\u6392\u7A7A\u53BB\u8131\u6C34"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_d03119cf0172496498af895cbf3d918d",
+          "name": "\u8131\u6C34\u5B8C\u6210",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_657ab3a21eb94a64bca654796124a805",
+              "left": "SpinProgress",
+              "operator": "\u003E=",
+              "rightMode": "literal",
+              "rightType": "number",
+              "rightValue": 60
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_00f23b50df5b49acaf0e6bc47fcd7868",
+          "name": "\u6545\u969C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_173bd31f5942400eb86d20271d3ee6f9",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_9dffd8db77ca44638c5f51eb2683d0bf",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u5B8C\u6210",
+      "x": 830,
+      "y": 910,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.FinishCycle",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_05719aaea9564f46901b342b77deb61b",
+          "name": "\u8131\u6C34\u5B8C\u6210"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_32ef1be6f0a9464087d02282b5675c2b",
+          "name": "\u590D\u4F4D",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_aa00bb76a8b8469f9c1b1413dd4ee088",
+              "left": "StartButton",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": false
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "regionId": "region_b5a3bac9419240f1b3979e0bbeec55cb",
+      "name": "\u6545\u969C\u505C\u673A",
+      "x": 1480,
+      "y": 910,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.StopMotor",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_4c00625ea32c4d64b1ac664010f8b01c",
+          "name": "\u6025\u505C"
+        },
+        {
+          "id": "input_ce6bd8da305a44ea913dbd160e6dd362",
+          "name": "\u6545\u969C"
+        },
+        {
+          "id": "input_7f4aed89237449afb2f4765c8633feb2",
+          "name": "\u6545\u969C"
+        },
+        {
+          "id": "input_7c4586d6dd384d9a873c3afab637b777",
+          "name": "\u6545\u969C"
+        },
+        {
+          "id": "input_a941e9e58d64472a963ea646e5a6b431",
+          "name": "\u6545\u969C"
+        },
+        {
+          "id": "input_47b97cd081b844f4b7b8d41d8f275021",
+          "name": "\u6545\u969C"
+        },
+        {
+          "id": "input_bf6482e0f66d42cb81729c088977b06b",
+          "name": "\u6545\u969C"
+        },
+        {
+          "id": "input_cbd2530d7938433ea1d4db26104c4364",
+          "name": "\u6545\u969C"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_a10038715a584d2e8258d397d752c261",
+          "name": "\u6545\u969C\u6D88\u9664",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_406decf0f0a14020a28ccc99aef00be9",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": false
+            },
+            {
+              "id": "condition_83d9ff6ff3ba4b64bd2130338309d41f",
+              "left": "FaultCode",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": ""
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_4f1ad393885545e397228ccb4d47548b",
+      "regionId": "region_ff584afb4d944f39be11bc625c1cd06a",
+      "name": "\u6C34\u4F4D\u7A7A\u95F2",
+      "x": 180,
+      "y": 1560,
+      "isStart": true,
       "beforeLeaveAction": {
         "actionMethod": "",
         "actionArguments": []
@@ -298,23 +1091,680 @@
       },
       "inputs": [
         {
-          "id": "input_c1306a6767e84d90b2dc9e822d709078",
-          "name": "\u8FDB\u5165"
+          "id": "input_835fe66d6ef74baf9f33caa0fd9135b6",
+          "name": "\u8FDB\u6C34\u5230\u4F4D"
+        },
+        {
+          "id": "input_2b079aab948d4b3097abcba9f17dddc1",
+          "name": "\u6545\u969C\u505C\u6B62\u8FDB\u6C34"
+        },
+        {
+          "id": "input_58c6d569467a4906ac3ebd9c73fb0205",
+          "name": "\u6392\u6C34\u5B8C\u6210"
+        },
+        {
+          "id": "input_0a95d778283e4ee3b9bf98de4efc9ce1",
+          "name": "\u6545\u969C\u505C\u6B62\u6392\u6C34"
         }
       ],
       "outputs": [
         {
-          "id": "output_a0b33e684fa44fb5933a3a8d9b721210",
-          "name": "\u505C\u6B62",
+          "id": "output_e1a4c251c66f4d908e2b5431157b59bf",
+          "name": "\u9700\u8981\u8FDB\u6C34",
+          "matchMode": "any",
+          "conditions": [
+            {
+              "id": "condition_a0314b19e7dc4f68b833f790f52156d0",
+              "left": "Phase",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "filling"
+            },
+            {
+              "id": "condition_94ad265e14114ff7a8f99b801b033628",
+              "left": "Phase",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "rinseFilling"
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_1cc09e4f09644f39b0ebe2e2e9e680e1",
+          "name": "\u9700\u8981\u6392\u6C34",
+          "matchMode": "any",
+          "conditions": [
+            {
+              "id": "condition_dba2c31de3f74c548a3201e45af124d7",
+              "left": "Phase",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "draining"
+            },
+            {
+              "id": "condition_fe810e88015d444a92ca772f29eacd6e",
+              "left": "Phase",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "rinseDraining"
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_a35d69a65b3645ae8752256bd8e6bf40",
+      "regionId": "region_ff584afb4d944f39be11bc625c1cd06a",
+      "name": "\u8FDB\u6C34",
+      "x": 830,
+      "y": 1560,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.OpenWaterInletValve",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "WashingMachineActions.UpdateWaterLevel",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_91715503ec6a4a9999fc11d851ba1aed",
+          "name": "\u9700\u8981\u8FDB\u6C34"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_663f4f5878f740dfa70be0d4f29a1ee2",
+          "name": "\u8FDB\u6C34\u5230\u4F4D",
           "matchMode": "all",
           "conditions": [
             {
-              "id": "condition_1d92d7366ad14ee581438fdb6462eeee",
-              "left": "RobotDone",
+              "id": "condition_d913be433fa246b6872670e9e0894d6e",
+              "left": "WaterLevelOk",
               "operator": "==",
               "rightMode": "literal",
               "rightType": "boolean",
               "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_2ada84a167334cf58ea41b3e435714ad",
+          "name": "\u6545\u969C\u505C\u6B62\u8FDB\u6C34",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_311d798e5bc341cc82cdc354cedb7e96",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_209bfeaef1564e0a80579c4ab2306df8",
+      "regionId": "region_ff584afb4d944f39be11bc625c1cd06a",
+      "name": "\u6392\u6C34",
+      "x": 1480,
+      "y": 1560,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.OpenDrainValve",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "WashingMachineActions.UpdateDraining",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_dcf8b557fb0941568bce4bd583d77c24",
+          "name": "\u9700\u8981\u6392\u6C34"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_3127a460abfa40079cf489db2422baff",
+          "name": "\u6392\u6C34\u5B8C\u6210",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_ddab8ac9c0ef4cbbb2d1bd356d3e14ff",
+              "left": "DrainDone",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_1da2e613d46b470aba742d11f6067bbc",
+          "name": "\u6545\u969C\u505C\u6B62\u6392\u6C34",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_bd9605868ca240c19bb6d477865316f3",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_a970d7f136b04de192d7bc5e26ddba47",
+      "regionId": "region_98eae03b9ac84f90acb047e0bdff5ca8",
+      "name": "\u6E29\u5EA6\u5F85\u673A",
+      "x": 180,
+      "y": 2210,
+      "isStart": true,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_59cec5216bfe42efa4ca889b0257b299",
+          "name": "\u6E29\u5EA6\u8FBE\u6807"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_62f8eda5c6cc469693050430c90e9a80",
+          "name": "\u9700\u8981\u52A0\u70ED",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_274591e218da4b3f9de3d9d5b733144a",
+              "left": "TemperatureOk",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": false
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_ff893e7816cb4423a521546a03055ca9",
+      "regionId": "region_98eae03b9ac84f90acb047e0bdff5ca8",
+      "name": "\u52A0\u70ED",
+      "x": 830,
+      "y": 2210,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.StartHeating",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "WashingMachineActions.UpdateTemperature",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_780ade72ad1042e584f1a0aa1c130fa1",
+          "name": "\u9700\u8981\u52A0\u70ED"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_f8f83707e67b43789aace3d694e378d8",
+          "name": "\u6E29\u5EA6\u8FBE\u6807",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_5d16745fadba4d438af69edfe0ccc055",
+              "left": "TemperatureOk",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_3330a187eff94ae6850d89ca394ce8fe",
+      "regionId": "region_8a94479f27044971a526a46fea602a9b",
+      "name": "\u7535\u673A\u7A7A\u95F2",
+      "x": 180,
+      "y": 2860,
+      "isStart": true,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_cc3881cc9bc047b6a82daa96e113f295",
+          "name": "\u9000\u51FA\u6D17\u6DA4"
+        },
+        {
+          "id": "input_0f194e4816744d68b9f62839eb483202",
+          "name": "\u9000\u51FA\u8131\u6C34"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_3d8dfd60690947c5b29ce7620e3bec5b",
+          "name": "\u8FDB\u5165\u6D17\u6DA4",
+          "matchMode": "any",
+          "conditions": [
+            {
+              "id": "condition_4f194fe2c0d643f99614e2b93f002132",
+              "left": "Phase",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "washing"
+            },
+            {
+              "id": "condition_5446e9b217884441ab836de822e84896",
+              "left": "Phase",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "rinseWashing"
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        },
+        {
+          "id": "output_c8c856627c344c9cab403f7879515642",
+          "name": "\u8FDB\u5165\u8131\u6C34",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_82dd91d720304515be5c0a9cdbe33448",
+              "left": "Phase",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "spinning"
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_fbc7e70b7c054d0b9461db1eac3da8e7",
+      "regionId": "region_8a94479f27044971a526a46fea602a9b",
+      "name": "\u6D17\u6DA4\u7535\u673A\u8FD0\u884C",
+      "x": 830,
+      "y": 2860,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "WashingMachineActions.UpdateMotorWashing",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_46881da8604c48f7bc877daf22018c75",
+          "name": "\u8FDB\u5165\u6D17\u6DA4"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_76d127486adc462eabead0e2ee72cce5",
+          "name": "\u9000\u51FA\u6D17\u6DA4",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_51eea2d6e65b4ceabefdb99dad68131d",
+              "left": "Phase",
+              "operator": "!=",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "washing"
+            },
+            {
+              "id": "condition_61c06327afdc4380a56310c131e7a68c",
+              "left": "Phase",
+              "operator": "!=",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "rinseWashing"
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_6b8d5c09b4144b4797f36159e6800290",
+      "regionId": "region_8a94479f27044971a526a46fea602a9b",
+      "name": "\u8131\u6C34\u7535\u673A\u8FD0\u884C",
+      "x": 1480,
+      "y": 2860,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "WashingMachineActions.UpdateSpinning",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_7b735ba518824f259f4b1905d3407433",
+          "name": "\u8FDB\u5165\u8131\u6C34"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_fe973bb3afa1490cb82b21e5f1733426",
+          "name": "\u9000\u51FA\u8131\u6C34",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_538d4f9a8fc24c55a8277e7c906f72ce",
+              "left": "Phase",
+              "operator": "!=",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": "spinning"
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_ab66a0423249466ea8be36594ededd6f",
+      "regionId": "region_9d917ef792a9423d8d95041030156f28",
+      "name": "\u95E8\u9501\u6253\u5F00",
+      "x": 180,
+      "y": 3510,
+      "isStart": true,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.UnlockDoor",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_a7f12a84b91b4fab92978cfe906b1704",
+          "name": "\u89E3\u9501\u95E8\u9501"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_77d2604ca73041319ac3e8d842d893f2",
+          "name": "\u9501\u5B9A\u95E8\u9501",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_5e8c3f203e5347e6bc01120c3602da4d",
+              "left": "StartButton",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_d8d43962e55b4c6295ca4467fc4e50de",
+      "regionId": "region_9d917ef792a9423d8d95041030156f28",
+      "name": "\u95E8\u9501\u9501\u5B9A",
+      "x": 830,
+      "y": 3510,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.LockDoor",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_1789acf684f94843b74aa1619ccf2504",
+          "name": "\u9501\u5B9A\u95E8\u9501"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_148c8df185a6463d9a7dd4551c6c8546",
+          "name": "\u89E3\u9501\u95E8\u9501",
+          "matchMode": "any",
+          "conditions": [
+            {
+              "id": "condition_8ae66b029e4449169d3830c60e89e6bd",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            },
+            {
+              "id": "condition_07dd9c1aef5947059c40858615af07ab",
+              "left": "CycleComplete",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_cf1c4f88c0f643e1b7a19e847e21e9d4",
+      "regionId": "region_09561926b703491299d35bdc304244e3",
+      "name": "\u5B89\u5168\u76D1\u63A7",
+      "x": 180,
+      "y": 4160,
+      "isStart": true,
+      "beforeLeaveAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "WashingMachineActions.DetectFault",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_324d7a8367574325905333bfeae4b0bc",
+          "name": "\u6545\u969C\u6D88\u9664"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_e92afa9cc1764018a6a9570ab7f459f8",
+          "name": "\u8FDB\u5165\u6545\u969C",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_e00355280923456bba6e83009e1bcc4c",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": true
+            }
+          ],
+          "actionMethod": "",
+          "actionArguments": [],
+          "actionPath": "",
+          "actionArgs": "[]"
+        }
+      ]
+    },
+    {
+      "id": "state_802bd645513040f9a30827af0ba8f80a",
+      "regionId": "region_09561926b703491299d35bdc304244e3",
+      "name": "\u5B89\u5168\u6545\u969C",
+      "x": 830,
+      "y": 4160,
+      "isStart": false,
+      "beforeLeaveAction": {
+        "actionMethod": "WashingMachineActions.StopMotor",
+        "actionArguments": []
+      },
+      "loopAction": {
+        "actionMethod": "WashingMachineActions.DetectFault",
+        "actionArguments": []
+      },
+      "afterEnterAction": {
+        "actionMethod": "",
+        "actionArguments": []
+      },
+      "inputs": [
+        {
+          "id": "input_fb445599bb8b40dcb213f322cba73ffc",
+          "name": "\u8FDB\u5165\u6545\u969C"
+        }
+      ],
+      "outputs": [
+        {
+          "id": "output_f07f6dd22d3b4e9db4ee8b2f993ff520",
+          "name": "\u6545\u969C\u6D88\u9664",
+          "matchMode": "all",
+          "conditions": [
+            {
+              "id": "condition_d04a44222b414666ab3322ae12125e11",
+              "left": "EmergencyStop",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "boolean",
+              "rightValue": false
+            },
+            {
+              "id": "condition_6d931f0daeaf4b74858e1b21ea99161d",
+              "left": "FaultCode",
+              "operator": "==",
+              "rightMode": "literal",
+              "rightType": "string",
+              "rightValue": ""
             }
           ],
           "actionMethod": "",
@@ -327,46 +1777,263 @@
   ],
   "edges": [
     {
-      "id": "edge_483f3524c4a84d3e9b9f4e513d03c102",
-      "fromStateId": "state_aa548abd7d584130a477b67fbf3766f4",
-      "fromPortId": "output_c347c1f9af9e4c09b80bea1a28ee978d",
-      "toStateId": "state_86fd892dedea48cc90b1a328b7644b13",
-      "toPortId": "input_c64340353713497ebc87d925b7bc324f"
+      "id": "edge_de0a54f58e53404b9d92e30e28db0c58",
+      "fromStateId": "state_93d2ecc5efab44b7858d199959d2566e",
+      "fromPortId": "output_2496abd7df3e404da92ceb03ce369bb3",
+      "toStateId": "state_db33ff0a0e33470ca65d5bc8da8c2a52",
+      "toPortId": "input_8d72d94d34bd4dc39af747da07a5ffbc"
     },
     {
-      "id": "edge_73e56620b1ad44daa15b4266ff320786",
-      "fromStateId": "state_86fd892dedea48cc90b1a328b7644b13",
-      "fromPortId": "output_c8679bb9080145a785c4aa7e915296e6",
-      "toStateId": "state_aa548abd7d584130a477b67fbf3766f4",
-      "toPortId": "input_120ca33e00eb4414bad85887fcbddc3c"
+      "id": "edge_50dfc190831a47fc89c323902e43cd03",
+      "fromStateId": "state_93d2ecc5efab44b7858d199959d2566e",
+      "fromPortId": "output_888693adbf4b49e1b218a831bc4990c6",
+      "toStateId": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "toPortId": "input_4c00625ea32c4d64b1ac664010f8b01c"
     },
     {
-      "id": "edge_b8c9f8d5d8484d8e8a68613f33574464",
-      "fromStateId": "state_aa548abd7d584130a477b67fbf3766f4",
-      "fromPortId": "output_aefb8bbd7ffd4152969e3caeda5f656e",
-      "toStateId": "state_f40a9fc6fab44a2ab1bc1db006d3c13e",
-      "toPortId": "input_ebcb2d04980b4265a2cb216b182d6c8e"
+      "id": "edge_b382784b8fa64c829d5be161fda0737b",
+      "fromStateId": "state_db33ff0a0e33470ca65d5bc8da8c2a52",
+      "fromPortId": "output_acd8b3cec0704d008a81384fdf001cc9",
+      "toStateId": "state_b3ebd31d5a8e4dc3b55c195caa0f6b64",
+      "toPortId": "input_9e88983b232144869406f3db5ea134dd"
     },
     {
-      "id": "edge_3496a98577e04410b9b1f45d375f34a1",
-      "fromStateId": "state_f40a9fc6fab44a2ab1bc1db006d3c13e",
-      "fromPortId": "output_0a268d79fc774d4a899c659ca9b3977e",
-      "toStateId": "state_aa548abd7d584130a477b67fbf3766f4",
-      "toPortId": "input_ec0c01472acb4ec9ba4c97f629a2fa91"
+      "id": "edge_68a637f905814126a20e6e6b4cdc7aaf",
+      "fromStateId": "state_b3ebd31d5a8e4dc3b55c195caa0f6b64",
+      "fromPortId": "output_3dcbbb740f6e47f684bb8374346a51e2",
+      "toStateId": "state_7aeaff338383413e8a0794882fd722a9",
+      "toPortId": "input_5d4697db9c2743398fcf8d273f13862d"
     },
     {
-      "id": "edge_d53c99b34bfa4441a0c4b5e1709b20fd",
-      "fromStateId": "state_72ec4fb4828f4c9d9984997ba20160fc",
-      "fromPortId": "output_9c286ed40a67443b99e47358dc24a5b8",
-      "toStateId": "state_05d29c6710da4c5ebaa161f7807f462a",
-      "toPortId": "input_c1306a6767e84d90b2dc9e822d709078"
+      "id": "edge_ad807a2bf0c942a1a2cc58fedf74407d",
+      "fromStateId": "state_b3ebd31d5a8e4dc3b55c195caa0f6b64",
+      "fromPortId": "output_7a29d959650b4138a2cdd00dc54244be",
+      "toStateId": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "toPortId": "input_ce6bd8da305a44ea913dbd160e6dd362"
     },
     {
-      "id": "edge_c493280b549b4fb3a9993a09596e2bc2",
-      "fromStateId": "state_05d29c6710da4c5ebaa161f7807f462a",
-      "fromPortId": "output_a0b33e684fa44fb5933a3a8d9b721210",
-      "toStateId": "state_72ec4fb4828f4c9d9984997ba20160fc",
-      "toPortId": "input_47c62a28ddb141a997c5a91fd34fe3ed"
+      "id": "edge_a82aca5f1b5b490e860ebb9d6cbecb9c",
+      "fromStateId": "state_7aeaff338383413e8a0794882fd722a9",
+      "fromPortId": "output_2137a3c284144cf88863c52ecf44bbbf",
+      "toStateId": "state_e2faee0379e44646aa9878398c9f7130",
+      "toPortId": "input_a8b257798ecc4e1bb5de8630de1cf5d7"
+    },
+    {
+      "id": "edge_ee99bd9aed1048e088fd062b244f328d",
+      "fromStateId": "state_7aeaff338383413e8a0794882fd722a9",
+      "fromPortId": "output_bc9c3ddffb364f149338681e43a9f819",
+      "toStateId": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "toPortId": "input_7f4aed89237449afb2f4765c8633feb2"
+    },
+    {
+      "id": "edge_591e39cc1a5e4b68b5434d891e0a9a15",
+      "fromStateId": "state_e2faee0379e44646aa9878398c9f7130",
+      "fromPortId": "output_e7da2542de424eeab326c1b9eee07a81",
+      "toStateId": "state_34fbb1e5822b4202b919cde980f18e97",
+      "toPortId": "input_e7e2597193004b069744b1b5bb9ae6fa"
+    },
+    {
+      "id": "edge_0509a3f037ac4b868695d20a762843e3",
+      "fromStateId": "state_e2faee0379e44646aa9878398c9f7130",
+      "fromPortId": "output_71dce1eede0c474e8e93d2cc847d6352",
+      "toStateId": "state_ffb29c3d92bb4bbd85d03cb530c52b8b",
+      "toPortId": "input_5b055afa828c45b9a7cc9fd4083f4af3"
+    },
+    {
+      "id": "edge_1b440d0c530b4c51908a39e821e7c8fd",
+      "fromStateId": "state_e2faee0379e44646aa9878398c9f7130",
+      "fromPortId": "output_3d7b89d00bf7480299078f57764b33ab",
+      "toStateId": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "toPortId": "input_7c4586d6dd384d9a873c3afab637b777"
+    },
+    {
+      "id": "edge_5bac96c894af4fbbb359a9130244c53e",
+      "fromStateId": "state_34fbb1e5822b4202b919cde980f18e97",
+      "fromPortId": "output_922066b4f24f4f80b9b1e610be3db2bd",
+      "toStateId": "state_e22c4d9bc4604c21ab5963068bbb1cca",
+      "toPortId": "input_afcc02cceb794c97860280c4f620a722"
+    },
+    {
+      "id": "edge_99671f234c8344e89d9633e3cd8e2cba",
+      "fromStateId": "state_34fbb1e5822b4202b919cde980f18e97",
+      "fromPortId": "output_7b8da761b8ef488c94c519c581d4f6c2",
+      "toStateId": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "toPortId": "input_a941e9e58d64472a963ea646e5a6b431"
+    },
+    {
+      "id": "edge_0d6ef04d2058494592b4480d11f404b5",
+      "fromStateId": "state_e22c4d9bc4604c21ab5963068bbb1cca",
+      "fromPortId": "output_90372a7cecdd405f8cf4e3cd6d746cdd",
+      "toStateId": "state_b50dafe8a92c4069827b53cea648e207",
+      "toPortId": "input_6f233360b0764e76a913005a4ecd07ba"
+    },
+    {
+      "id": "edge_6d8c9d22c4e444e083258f6b053a4de4",
+      "fromStateId": "state_e22c4d9bc4604c21ab5963068bbb1cca",
+      "fromPortId": "output_d585ad5f076d46d790fcb6a95674981e",
+      "toStateId": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "toPortId": "input_47b97cd081b844f4b7b8d41d8f275021"
+    },
+    {
+      "id": "edge_a105e667b3804bf6a61648f18e106b7a",
+      "fromStateId": "state_b50dafe8a92c4069827b53cea648e207",
+      "fromPortId": "output_6244f79af13f45d2ace58b14b28d41d9",
+      "toStateId": "state_34fbb1e5822b4202b919cde980f18e97",
+      "toPortId": "input_0c5599fc180e484d821c6b0772594f74"
+    },
+    {
+      "id": "edge_8542c8b3716f4985b9fc871ad3b99f19",
+      "fromStateId": "state_b50dafe8a92c4069827b53cea648e207",
+      "fromPortId": "output_992dd73dd0c74f9ca5a15e1834bf6476",
+      "toStateId": "state_ffb29c3d92bb4bbd85d03cb530c52b8b",
+      "toPortId": "input_7a9737cb349f4556889b5d8be50d6968"
+    },
+    {
+      "id": "edge_d0d8ffcf76d240938321aefe155b2d14",
+      "fromStateId": "state_b50dafe8a92c4069827b53cea648e207",
+      "fromPortId": "output_9f34b09569b44537bbe41e1ba05c0891",
+      "toStateId": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "toPortId": "input_bf6482e0f66d42cb81729c088977b06b"
+    },
+    {
+      "id": "edge_33dbb04da1f94b07a51e3809456942b3",
+      "fromStateId": "state_ffb29c3d92bb4bbd85d03cb530c52b8b",
+      "fromPortId": "output_d03119cf0172496498af895cbf3d918d",
+      "toStateId": "state_9dffd8db77ca44638c5f51eb2683d0bf",
+      "toPortId": "input_05719aaea9564f46901b342b77deb61b"
+    },
+    {
+      "id": "edge_8bf388ec8c5a4d20ae6bbd7caf5965c0",
+      "fromStateId": "state_ffb29c3d92bb4bbd85d03cb530c52b8b",
+      "fromPortId": "output_00f23b50df5b49acaf0e6bc47fcd7868",
+      "toStateId": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "toPortId": "input_cbd2530d7938433ea1d4db26104c4364"
+    },
+    {
+      "id": "edge_2c54df6eea9d471aa6e0ada738ca9795",
+      "fromStateId": "state_9dffd8db77ca44638c5f51eb2683d0bf",
+      "fromPortId": "output_32ef1be6f0a9464087d02282b5675c2b",
+      "toStateId": "state_93d2ecc5efab44b7858d199959d2566e",
+      "toPortId": "input_b4c438cc58ec4563a8f7e29bbe0ae6de"
+    },
+    {
+      "id": "edge_c7f34856223344729c894e7033613e62",
+      "fromStateId": "state_32e1c67b77c34af6a768cf907b9d6b0b",
+      "fromPortId": "output_a10038715a584d2e8258d397d752c261",
+      "toStateId": "state_93d2ecc5efab44b7858d199959d2566e",
+      "toPortId": "input_f5f10e86558546c685c40985e3b8f5eb"
+    },
+    {
+      "id": "edge_6d7ddc9231b14efd8d8a7a1d581431de",
+      "fromStateId": "state_4f1ad393885545e397228ccb4d47548b",
+      "fromPortId": "output_e1a4c251c66f4d908e2b5431157b59bf",
+      "toStateId": "state_a35d69a65b3645ae8752256bd8e6bf40",
+      "toPortId": "input_91715503ec6a4a9999fc11d851ba1aed"
+    },
+    {
+      "id": "edge_6a15de3730e7403cbd51d3634c0fc2ee",
+      "fromStateId": "state_4f1ad393885545e397228ccb4d47548b",
+      "fromPortId": "output_1cc09e4f09644f39b0ebe2e2e9e680e1",
+      "toStateId": "state_209bfeaef1564e0a80579c4ab2306df8",
+      "toPortId": "input_dcf8b557fb0941568bce4bd583d77c24"
+    },
+    {
+      "id": "edge_3267c95515904cfb83899199dd85cc57",
+      "fromStateId": "state_a35d69a65b3645ae8752256bd8e6bf40",
+      "fromPortId": "output_663f4f5878f740dfa70be0d4f29a1ee2",
+      "toStateId": "state_4f1ad393885545e397228ccb4d47548b",
+      "toPortId": "input_835fe66d6ef74baf9f33caa0fd9135b6"
+    },
+    {
+      "id": "edge_18cc00a3ce9e41bb8ac8eeff690b4843",
+      "fromStateId": "state_a35d69a65b3645ae8752256bd8e6bf40",
+      "fromPortId": "output_2ada84a167334cf58ea41b3e435714ad",
+      "toStateId": "state_4f1ad393885545e397228ccb4d47548b",
+      "toPortId": "input_2b079aab948d4b3097abcba9f17dddc1"
+    },
+    {
+      "id": "edge_8a8e61ac596a44c0a96ccfd0c127a58b",
+      "fromStateId": "state_209bfeaef1564e0a80579c4ab2306df8",
+      "fromPortId": "output_3127a460abfa40079cf489db2422baff",
+      "toStateId": "state_4f1ad393885545e397228ccb4d47548b",
+      "toPortId": "input_58c6d569467a4906ac3ebd9c73fb0205"
+    },
+    {
+      "id": "edge_8c300fd395f94009a937043823493367",
+      "fromStateId": "state_209bfeaef1564e0a80579c4ab2306df8",
+      "fromPortId": "output_1da2e613d46b470aba742d11f6067bbc",
+      "toStateId": "state_4f1ad393885545e397228ccb4d47548b",
+      "toPortId": "input_0a95d778283e4ee3b9bf98de4efc9ce1"
+    },
+    {
+      "id": "edge_4a04bbc9abcb4bf2be373c125efb840a",
+      "fromStateId": "state_a970d7f136b04de192d7bc5e26ddba47",
+      "fromPortId": "output_62f8eda5c6cc469693050430c90e9a80",
+      "toStateId": "state_ff893e7816cb4423a521546a03055ca9",
+      "toPortId": "input_780ade72ad1042e584f1a0aa1c130fa1"
+    },
+    {
+      "id": "edge_a23d97cad77f4ecc95955e1b00ffa7cb",
+      "fromStateId": "state_ff893e7816cb4423a521546a03055ca9",
+      "fromPortId": "output_f8f83707e67b43789aace3d694e378d8",
+      "toStateId": "state_a970d7f136b04de192d7bc5e26ddba47",
+      "toPortId": "input_59cec5216bfe42efa4ca889b0257b299"
+    },
+    {
+      "id": "edge_ca68297d4de046529dce9666a4f0df64",
+      "fromStateId": "state_3330a187eff94ae6850d89ca394ce8fe",
+      "fromPortId": "output_3d8dfd60690947c5b29ce7620e3bec5b",
+      "toStateId": "state_fbc7e70b7c054d0b9461db1eac3da8e7",
+      "toPortId": "input_46881da8604c48f7bc877daf22018c75"
+    },
+    {
+      "id": "edge_c128dba5130a47c5ae0a7de58aba0c43",
+      "fromStateId": "state_3330a187eff94ae6850d89ca394ce8fe",
+      "fromPortId": "output_c8c856627c344c9cab403f7879515642",
+      "toStateId": "state_6b8d5c09b4144b4797f36159e6800290",
+      "toPortId": "input_7b735ba518824f259f4b1905d3407433"
+    },
+    {
+      "id": "edge_fad577fec3114362a7f85826fa06ef42",
+      "fromStateId": "state_fbc7e70b7c054d0b9461db1eac3da8e7",
+      "fromPortId": "output_76d127486adc462eabead0e2ee72cce5",
+      "toStateId": "state_3330a187eff94ae6850d89ca394ce8fe",
+      "toPortId": "input_cc3881cc9bc047b6a82daa96e113f295"
+    },
+    {
+      "id": "edge_30812abadff34a4eb9d7027b06830fba",
+      "fromStateId": "state_6b8d5c09b4144b4797f36159e6800290",
+      "fromPortId": "output_fe973bb3afa1490cb82b21e5f1733426",
+      "toStateId": "state_3330a187eff94ae6850d89ca394ce8fe",
+      "toPortId": "input_0f194e4816744d68b9f62839eb483202"
+    },
+    {
+      "id": "edge_be7d0b04046745a3a21176f1d2d781e4",
+      "fromStateId": "state_ab66a0423249466ea8be36594ededd6f",
+      "fromPortId": "output_77d2604ca73041319ac3e8d842d893f2",
+      "toStateId": "state_d8d43962e55b4c6295ca4467fc4e50de",
+      "toPortId": "input_1789acf684f94843b74aa1619ccf2504"
+    },
+    {
+      "id": "edge_07085edf0f9941e59d0939983560515d",
+      "fromStateId": "state_d8d43962e55b4c6295ca4467fc4e50de",
+      "fromPortId": "output_148c8df185a6463d9a7dd4551c6c8546",
+      "toStateId": "state_ab66a0423249466ea8be36594ededd6f",
+      "toPortId": "input_a7f12a84b91b4fab92978cfe906b1704"
+    },
+    {
+      "id": "edge_d0b72ce658ea4cb89c146d5d139e6b64",
+      "fromStateId": "state_cf1c4f88c0f643e1b7a19e847e21e9d4",
+      "fromPortId": "output_e92afa9cc1764018a6a9570ab7f459f8",
+      "toStateId": "state_802bd645513040f9a30827af0ba8f80a",
+      "toPortId": "input_fb445599bb8b40dcb213f322cba73ffc"
+    },
+    {
+      "id": "edge_ccd10c2e11af4ff5b9dbd3c42a57819c",
+      "fromStateId": "state_802bd645513040f9a30827af0ba8f80a",
+      "fromPortId": "output_f07f6dd22d3b4e9db4ee8b2f993ff520",
+      "toStateId": "state_cf1c4f88c0f643e1b7a19e847e21e9d4",
+      "toPortId": "input_324d7a8367574325905333bfeae4b0bc"
     }
   ],
   "settings": {

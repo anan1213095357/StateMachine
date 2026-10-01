@@ -20,7 +20,7 @@
         </div>
         <button class="btn primary" @onclick="AddStateAsync">+ 状态</button>
         <button class="btn ai-btn" @onclick="OpenAiDialog">
-            ✦ AI 编排
+            ✦ AI 开发
         </button>
         <button class="btn green" @onclick="RunMachineAsync">▶ 运行</button>
         <button class="btn" @onclick="StepAsync">单步</button>
@@ -91,6 +91,13 @@
                                 <input class="input" value="@variable.Name" @oninput="e => RenameVariable(variable.Id, e.Value?.ToString() ?? string.Empty)" />
                                 <button class="remove-btn" @onclick="() => DeleteVariable(variable.Id)">×</button>
                             </div>
+                            <div class="variable-address">
+                                <input class="input"
+                                       placeholder="PLC 地址，例如 DB1.DBX0.0 / M0.0"
+                                       @bind="variable.Address"
+                                       @bind:event="oninput" />
+                            </div>
+
                             <div class="variable-bottom">
                                 <select class="select" value="@variable.Type" @onchange='e => ChangeVariableType(variable.Id, e.Value?.ToString() ?? "string")'>
                                     <option value="number">number</option>
@@ -98,6 +105,7 @@
                                     <option value="boolean">boolean</option>
                                     <option value="json">json</option>
                                 </select>
+
                                 @if (variable.Type == "boolean")
                                 {
                                     <select class="select" value="@DisplayNode(variable.Value, variable.Type)" @onchange='e => ChangeVariableValue(variable.Id, e.Value?.ToString() ?? "false")'>
@@ -739,9 +747,9 @@
                     <div class="ai-logo">✦</div>
 
                     <div>
-                        <div class="ai-title">AI 逻辑编排</div>
+                        <div class="ai-title">AI 逻辑编排 + C# 热更</div>
                         <div class="ai-subtitle">
-                            自动生成状态、变量、条件、动作与流程连线
+                            自动生成状态机，也能直接编写 / 修改 HotScripts csx
                         </div>
                     </div>
                 </div>
@@ -780,11 +788,11 @@
                         <div class="ai-welcome-icon">✦</div>
 
                         <div class="ai-welcome-title">
-                            想怎么编排？
+                            想怎么做？
                         </div>
 
                         <div class="ai-welcome-desc">
-                            用自然语言描述设备流程，我会自动创建状态机。
+                            描述流程或 C# 动作需求，AI 可以同时修改状态机和 csx。
                         </div>
 
                         <div class="ai-example-grid">
@@ -808,9 +816,9 @@
                             </button>
 
                             <button class="ai-example"
-                                    @onclick='() => SetAiExample("在当前流程基础上增加一个超时报警状态，设备运行超过10秒没有完成就进入报警。")'>
-                                <strong>修改当前流程</strong>
-                                <span>直接修改现有编排</span>
+                                    @onclick='() => SetAiExample("给我写一个 UserActions.csx：增加数值变量、布尔取反、延时设置布尔变量，并让这些动作能直接出现在状态动作下拉框里。")'>
+                                <strong>C# 热更动作</strong>
+                                <span>直接生成可热加载的 csx</span>
                             </button>
 
                         </div>
@@ -889,7 +897,7 @@
                 </div>
             }
 
-            <!-- 待应用编排 -->
+            <!-- 待应用变更 -->
             @if (_pendingAiPlan is not null)
             {
                 <div class="ai-plan-bar">
@@ -899,19 +907,39 @@
                     </div>
 
                     <div class="ai-plan-info">
-                        <strong>编排已生成</strong>
-                        <span>
-                            @_pendingAiPlan.Regions.Count 个状态域 ·
-                            @_pendingAiPlan.Variables.Count 个变量 ·
-                            @_pendingAiPlan.States.Count 个状态 ·
-                            @_pendingAiPlan.Transitions.Count 条连线
-                        </span>
+                        <strong>变更已生成</strong>
+
+                        @if (_pendingAiPlan.ApplyMachine)
+                        {
+                            <span>
+                                流程：@_pendingAiPlan.Regions.Count 个状态域 ·
+                                @_pendingAiPlan.Variables.Count 个变量 ·
+                                @_pendingAiPlan.States.Count 个状态 ·
+                                @_pendingAiPlan.Transitions.Count 条连线
+                            </span>
+                        }
+                        else
+                        {
+                            <span>流程：保持当前状态机不变</span>
+                        }
+
+                        @if (_pendingAiPlan.Scripts.Count > 0)
+                        {
+                            <div class="ai-script-list">
+                                @foreach (var script in _pendingAiPlan.Scripts)
+                                {
+                                    <span class="ai-script-chip @(script.Operation == "delete" ? "delete" : "")">
+                                        @(script.Operation == "delete" ? "删除" : "写入") · @script.FileName
+                                    </span>
+                                }
+                            </div>
+                        }
                     </div>
 
                     <button class="btn green"
                             disabled="@_aiBusy"
                             @onclick="ApplyPendingAiPlanAsync">
-                        应用到画布
+                        应用变更
                     </button>
 
                 </div>
@@ -926,13 +954,13 @@
                               @bind="_aiInput"
                               @bind:event="oninput"
                               disabled="@_aiBusy"
-                              placeholder="描述你想要的流程，例如：做一个电机启停流程...">
+                              placeholder="描述流程或 C# 热更需求，例如：做一个电机启停流程，并生成需要的 UserActions.csx...">
                     </textarea>
 
                     <div class="ai-composer-footer">
 
                         <div class="ai-composer-hint">
-                            AI 会读取当前变量和可调用 StateAction
+                            AI 会读取当前状态机、StateAction 和 HotScripts csx
                         </div>
 
                         <button class="ai-send"
@@ -945,7 +973,7 @@
                             }
                             else
                             {
-                                <span>生成</span>
+                                <span>生成变更</span>
                                 <span class="ai-send-arrow">↑</span>
                             }
 

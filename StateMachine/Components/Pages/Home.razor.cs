@@ -2217,7 +2217,7 @@ public partial class Home
 
         if (string.IsNullOrWhiteSpace(prompt))
         {
-            _aiError = "请输入需要生成的流程。";
+            _aiError = "请输入需要 AI 完成的流程或 C# 热更需求。";
             return;
         }
 
@@ -2235,14 +2235,11 @@ public partial class Home
 
         try
         {
-            var apiKey =
-                Configuration["AI:ApiKey"];
+            var apiKey = Configuration["AI:ApiKey"];
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                apiKey =
-                    Environment.GetEnvironmentVariable(
-                        "DASHSCOPE_API_KEY");
+                apiKey = Environment.GetEnvironmentVariable("DASHSCOPE_API_KEY");
             }
 
             if (string.IsNullOrWhiteSpace(apiKey))
@@ -2263,13 +2260,13 @@ public partial class Home
                     key = action.Key,
                     name = action.DisplayName,
                     group = action.Group,
-
+                    hotScript = action.IsHotScript,
                     parameters = action.Parameters
                         .Select(parameter => new
                         {
                             name = parameter.Name,
                             displayName = parameter.DisplayName,
-                            type = parameter.EffectiveType.Name,
+                            type = parameter.EffectiveType.FullName ?? parameter.EffectiveType.Name,
                             editorKind = parameter.EditorKind,
                             nullable = parameter.IsNullable,
                             defaultValue = parameter.DefaultLiteral
@@ -2278,212 +2275,208 @@ public partial class Home
                 })
                 .ToArray();
 
-            var actionJson =
-                JsonSerializer.Serialize(
-                    actionCatalog,
-                    _jsonOptions);
-
-            var currentMachineJson =
-                JsonSerializer.Serialize(
-                    Machine,
-                    _jsonOptions);
+            var actionJson = JsonSerializer.Serialize(actionCatalog, _jsonOptions);
+            var currentMachineJson = JsonSerializer.Serialize(Machine, _jsonOptions);
+            var currentScriptsJson = BuildAiCurrentScriptsJson();
 
             var systemPrompt = $$"""
-你是工业状态机逻辑编排器。
+你是工业状态机 + C# 热更开发器。
 
-你的任务是根据用户自然语言生成完整状态机规划。
+你的任务不是只做流程编排。你同时负责：
+1. 状态机流程：regions、variables、states、transitions。
+2. HotScripts 目录中的 .csx C# 热更动作。
 
-========================
+你必须根据用户需求判断：
+- 只改流程：applyMachine=true，scripts=[]。
+- 只写/改 C# 热更：applyMachine=false，四个流程数组可以为空。
+- 流程和 C# 都需要：applyMachine=true，同时返回 scripts。
+
+==================================================
+C# 热更运行环境
+==================================================
+
+所有 csx 会被当成普通 C# 源文件一起编译，不是顶层脚本语句。
+因此必须声明 class，动作类必须继承 StateScript。
+
+宿主已经自动提供这些 using：
+System
+System.Collections.Generic
+System.Linq
+System.Text.Json
+System.Text.Json.Nodes
+System.Threading
+System.Threading.Tasks
+StateMachine.Scripting
+
+宿主已经提供：
+
+public abstract class StateScript
+{
+    protected StateScriptContext Api { get; }
+    protected StateVariables Vars { get; }
+    protected T Service<T>() where T : notnull;
+    protected void Log(string message, string type = "SCRIPT", string level = "info");
+}
+
+StateVariables 常用 API：
+- Vars.Get<T>(name, defaultValue)
+- Vars.Get(name)
+- Vars.Set(name, value)
+
+Api 常用 API：
+- Api.Delay(milliseconds)
+- Api.GetNode(name)
+- Api.SetNode(name, value)
+- Api.Log(...)
+- Api.Service<T>()
+- Api.Services
+
+动作声明规则：
+
+[StateAction("显示名称", "分组")]
+public void MethodName(
+    [StateParameter("参数名称")] string value)
+{
+}
+
+允许返回：void、Task、Task<T>、ValueTask、ValueTask<T>。
+禁止 ref/out 参数。
+带 [StateAction] 的方法不要重载。
+
+推荐开发模式示例：
+
+public sealed class UserActions : StateScript
+{
+    [StateAction("数值变量增加", "C# 热更")]
+    public void AddNumber(
+        [StateParameter("变量Key")] string variableName,
+        [StateParameter("增加值")] double value)
+    {
+        var current = Vars.Get<double>(variableName, 0d);
+        Vars.Set(variableName, current + value);
+    }
+
+    [StateAction("延时后设置布尔变量", "C# 热更")]
+    public async Task DelaySetBoolean(
+        [StateParameter("延时毫秒")] int milliseconds,
+        [StateParameter("变量Key")] string variableName,
+        [StateParameter("值")] bool value)
+    {
+        await Api.Delay(milliseconds);
+        Vars.Set(variableName, value);
+        Log($"{variableName} = {value}");
+    }
+}
+
+如果需要主程序已注册服务，使用 Service<T>()。
+除非用户明确给出真实类型/库，禁止凭空编造不存在的 PLC 类型、服务类型、NuGet 包或 DLL。
+
+==================================================
+csx 文件规则
+==================================================
+
+scripts 数组每项：
+- fileName：HotScripts 下的相对路径，必须以 .csx 结尾。
+- operation：只允许 upsert 或 delete。
+- content：upsert 时必须是完整文件内容；delete 时必须为空字符串。
+
+修改已有 csx 时，必须返回修改后的完整文件，不能只返回代码片段。
+新建 csx 时也必须返回完整可编译文件。
+禁止使用绝对路径。
+禁止使用 .. 跳出 HotScripts。
+禁止修改 lib 目录 DLL。
+
+如果新生成的 csx 动作同时被状态机引用，action key 必须严格使用：
+Type.FullName + "." + MethodName
+
+例如全局命名空间：
+UserActions.AddNumber
+
+例如 namespace MyFactory.Actions：
+MyFactory.Actions.UserActions.AddNumber
+
+==================================================
 状态机规则
-========================
+==================================================
 
-1. 一个状态机包含：
-   regions
-   variables
-   states
-   transitions
-
-2. 不同 Region 之间禁止直接连线。
-   不同 Region 只能通过全局变量通信。
-
+1. 一个状态机包含：regions、variables、states、transitions。
+2. 不同 Region 之间禁止直接连线，只能通过全局变量通信。
 3. 每个 Region 必须至少有一个 State。
-
 4. 每个 Region 只能有一个 isStart=true。
-
 5. transition.from 和 transition.to 使用 State.key，不使用 GUID。
-
-6. 不需要生成：
-   stateId
-   regionId
-   inputId
-   outputId
-   edgeId
-   conditionId
-   x
-   y
-
-这些全部由 C# 自动创建。
-
-========================
-条件规则
-========================
+6. stateId、regionId、inputId、outputId、edgeId、conditionId、x、y 全部由 C# 自动创建。
 
 operator 只允许：
+== != > >= < <= contains startsWith endsWith
 
-==
-!=
->
->=
-<
-<=
-contains
-startsWith
-endsWith
+matchMode 只允许：all、any、always。
+rightMode 只允许：literal、variable。
+变量类型只允许：number、string、boolean、json。
 
-matchMode 只允许：
+生命周期：
+- enterAction：刚进入当前状态时执行一次。
+- loopAction：状态持续期间每个周期执行一次。
+- leaveAction：准备离开当前状态、切换到下一个状态之前执行一次。
 
-all
-any
-always
-
-rightMode：
-
-literal
-variable
-
-变量类型只允许：
-
-number
-string
-boolean
-json
-
-========================
-状态生命周期
-========================
-
-enterAction：
-刚进入当前状态时执行一次。
-
-loopAction：
-状态持续期间每个周期执行一次。
-
-leaveAction：
-准备离开当前状态、切换到下一个状态之前执行一次。
-
-========================
-动作调用规则
-========================
-
-只能调用下面动作目录中真实存在的动作。
-
-禁止编造任何不存在的方法。
-
-action 字段必须优先填写动作目录里的 key。
-
-如果状态不需要动作：
-
-action = ""
-arguments = []
+动作调用：
+- 可以调用“当前可调用动作”中的动作。
+- 也可以调用“本次 scripts 中新建/修改后确定会存在”的动作。
+- 除这两类以外禁止编造动作。
+- action 字段优先使用动作 key。
+- 无动作时 action=""，arguments=[]。
 
 argument.source：
+- literal：固定值。
+- variable：参数值从全局变量读取。
 
-literal
-表示直接传递固定值。
+特别注意：variableName / 变量Key / 变量名 这类参数，是告诉动作“操作哪个变量”，通常 source 必须是 literal。
+例如 AddNumber(variableName="Count", value=1)，variableName 应该是 literal: Count。
 
-variable
-表示参数值来自某个全局变量。
-
-特别注意：
-
-如果参数本身叫：
-variableName
-变量Key
-变量名
-
-这种参数通常是在告诉动作“操作哪个变量”。
-
-这种情况下：
-
-source 必须使用 literal
-
-例如：
-
-AddNumber(
-    variableName = "Count",
-    value = 1
-)
-
-应该生成：
-
-variableName:
-source = literal
-value = Count
-
-value:
-source = literal
-value = 1
-
-不要把 variableName 错误设置成 source=variable。
-
-========================
+==================================================
 当前可调用动作
-========================
+==================================================
 
-{actionJson}
+{{actionJson}}
 
-========================
+==================================================
 当前状态机
-========================
+==================================================
 
-{currentMachineJson}
+{{currentMachineJson}}
 
-========================
-修改规则
-========================
+==================================================
+当前 HotScripts csx 文件
+==================================================
 
-如果用户说：
+{{currentScriptsJson}}
 
-创建
-重新做
-重新生成
-新建
+==================================================
+修改原则
+==================================================
 
-则按照用户描述生成新的完整状态机。
+用户说创建/重新做/重新生成/新建流程时，生成新的完整状态机。
+用户说增加/修改/删除/在当前流程基础上时，参考当前状态机并返回修改后的完整状态机。
 
-如果用户说：
+用户如果只要求新增或修改 C# 动作，不要擅自重做状态机，此时 applyMachine=false。
+用户如果要求某个流程能力，但当前动作目录没有相应动作，而这个能力适合用 C# 动作实现，你应该同时生成 csx，并在流程中引用新动作。
 
-增加
-修改
-删除
-把某个状态改成
-在当前流程基础上
+==================================================
+输出格式
+==================================================
 
-则参考“当前状态机”，返回修改后的完整状态机。
+最终只能输出一个合法 JSON 对象。
+不要 Markdown，不要 ```json，不要解释文字。
 
-最终只能输出合法 JSON。
-
-禁止输出 Markdown。
-禁止输出 ```json。
-禁止输出解释文字。
-禁止在 JSON 前后输出任何其他内容。
-
-必须严格按照下面结构输出：
+结构必须是：
 
 {
-  "reply": "对本次编排的简短说明",
+  "reply": "本次改动的简短说明",
+  "applyMachine": true,
   "regions": [
-    {
-      "key": "motor",
-      "name": "电机"
-    }
+    { "key": "motor", "name": "电机" }
   ],
   "variables": [
-    {
-      "name": "MotorStart",
-      "type": "boolean",
-      "value": "false"
-    }
+    { "name": "MotorStart", "address": "M0.0", "type": "boolean", "value": "false" }
   ],
   "states": [
     {
@@ -2491,18 +2484,9 @@ value = 1
       "regionKey": "motor",
       "name": "电机停止",
       "isStart": true,
-      "enterAction": {
-        "action": "",
-        "arguments": []
-      },
-      "loopAction": {
-        "action": "",
-        "arguments": []
-      },
-      "leaveAction": {
-        "action": "",
-        "arguments": []
-      }
+      "enterAction": { "action": "", "arguments": [] },
+      "loopAction": { "action": "", "arguments": [] },
+      "leaveAction": { "action": "", "arguments": [] }
     }
   ],
   "transitions": [
@@ -2521,110 +2505,69 @@ value = 1
         }
       ]
     }
+  ],
+  "scripts": [
+    {
+      "fileName": "UserActions.csx",
+      "operation": "upsert",
+      "content": "public sealed class UserActions : StateScript\n{\n    ...\n}"
+    }
   ]
 }
 
-注意：
-
-regions、variables、states、transitions 必须始终存在。
-
-每个 state 必须始终包含：
-
-enterAction
-loopAction
-leaveAction
-
-即使没有动作也必须返回：
-
-{
-  "action": "",
-  "arguments": []
-}
-
+regions、variables、states、transitions、scripts 必须始终存在。
+所有 value 和 rightValue 都用字符串表示。
+每个 state 必须始终包含 enterAction、loopAction、leaveAction。
 每个 transition 必须始终包含 conditions。
 
-所有 value 和 rightValue 都用字符串表示。
+如果 applyMachine=false：
+- regions=[]
+- variables=[]
+- states=[]
+- transitions=[]
+- scripts 至少包含一个变更。
 
-只能使用“当前可调用动作”中存在的 action key。
+如果 applyMachine=true：
+- 必须生成完整状态机，不允许只返回局部流程差异。
 
-必须输出 JSON。
-
-非常重要：
-
-输出必须尽量精简。
-
-reply 最多 50 个汉字。
-
-状态名称尽量简短。
-
-不要输出任何解释、注释、分析过程。
-
-如果用户描述的系统非常复杂，也必须优先保证 JSON 完整结束，
-宁可减少不重要的辅助状态，也绝对不能输出到一半。
-
-单次最多生成：
-- 4 个状态域
-- 20 个状态
-- 30 个变量
-- 30 条 transitions
-
-不要重复描述相同内容。
+reply 尽量简短。
+状态域、状态、变量、transitions、csx 文件数量不做人工限制。
+必须保证 JSON 完整闭合，不能输出到一半。
 """;
+
+            var aiConversation = _aiMessages
+                .Select(message => (object)new
+                {
+                    role = message.Role == "assistant" ? "assistant" : "user",
+                    content = message.Text
+                })
+                .ToList();
+
+            // 当前 prompt 已经在 _aiMessages 末尾，system 放最前面即可。
+            aiConversation.Insert(0, new
+            {
+                role = "system",
+                content = systemPrompt
+            });
 
             var requestBody = new
             {
                 model,
-
-                messages = new object[]
-    {
-        new
-        {
-            role = "system",
-            content = systemPrompt
-        },
-
-        new
-        {
-            role = "user",
-            content = prompt
-        }
-    },
-
-                response_format = new
-                {
-                    type = "json_object"
-                },
-
-                max_tokens = 8192,
+                messages = aiConversation,
                 temperature = 0.1
             };
+            var requestJson = JsonSerializer.Serialize(requestBody, _jsonOptions);
 
-            var requestJson =
-                JsonSerializer.Serialize(
-                    requestBody,
-                    _jsonOptions);
-
-            using var request =
-                new HttpRequestMessage(
-                    HttpMethod.Post,
-                    endpoint);
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
 
             request.Headers.Authorization =
-                new AuthenticationHeaderValue(
-                    "Bearer",
-                    apiKey);
+                new AuthenticationHeaderValue("Bearer", apiKey);
 
             request.Content =
-                new StringContent(
-                    requestJson,
-                    Encoding.UTF8,
-                    "application/json");
+                new StringContent(requestJson, Encoding.UTF8, "application/json");
 
-            using var response =
-                await AiHttpClient.SendAsync(request);
-
-            var responseText =
-                await response.Content.ReadAsStringAsync();
+            using var response = await AiHttpClient.SendAsync(request);
+            var responseText = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
             {
@@ -2632,50 +2575,35 @@ reply 最多 50 个汉字。
                     $"AI请求失败 {(int)response.StatusCode}：{LimitText(responseText, 1500)}");
             }
 
-            using var document =
-                JsonDocument.Parse(responseText);
-
+            using var document = JsonDocument.Parse(responseText);
             var choice = document.RootElement.GetProperty("choices")[0];
-
-            var finishReason =
-                choice.TryGetProperty("finish_reason", out var finishNode)
-                    ? finishNode.GetString()
-                    : null;
+            
 
             var content = choice
-                    .GetProperty("message")
-                    .GetProperty("content")
-                    .GetString();
-
-            if (string.Equals(
-                    finishReason,
-                    "length",
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException(
-                    "AI输出内容过长，被模型截断了。请把流程拆小一点生成，或者减少一次生成的状态数量。");
-            }
+                .GetProperty("message")
+                .GetProperty("content")
+                .GetString();
 
             if (string.IsNullOrWhiteSpace(content))
-            {
-                throw new InvalidOperationException(
-                    "AI没有返回编排数据。");
-            }
+                throw new InvalidOperationException("AI没有返回任何数据。");
 
-            if (string.IsNullOrWhiteSpace(content))
-                throw new InvalidOperationException(
-                    "AI没有返回编排数据。");
+            var json = ExtractAiJson(content);
 
-            var plan =
-                JsonSerializer.Deserialize<AiMachinePlan>(
-                    content,
-                    _jsonOptions);
+            var plan = JsonSerializer.Deserialize<AiMachinePlan>(json, _jsonOptions)
+                ?? throw new InvalidOperationException("AI返回数据无法解析。");
 
-            if (plan is null)
-                throw new InvalidOperationException(
-                    "AI返回数据无法解析。");
+            plan.Scripts ??= new List<AiScriptPlan>();
+            plan.Regions ??= new List<AiRegionPlan>();
+            plan.Variables ??= new List<AiVariablePlan>();
+            plan.States ??= new List<AiStatePlan>();
+            plan.Transitions ??= new List<AiTransitionPlan>();
 
-            ValidateAiPlan(plan);
+            ValidateAiScripts(plan.Scripts);
+
+            if (plan.ApplyMachine)
+                ValidateAiPlan(plan, validateActions: false);
+            else if (plan.Scripts.Count == 0)
+                throw new InvalidOperationException("AI没有生成任何可应用的流程或 C# 热更改动。");
 
             _pendingAiPlan = plan;
 
@@ -2703,36 +2631,63 @@ reply 最多 50 个汉字。
 
     private async Task ApplyPendingAiPlanAsync()
     {
-        if (_pendingAiPlan is null)
+        if (_pendingAiPlan is null || _aiBusy)
             return;
 
+        _aiBusy = true;
         _aiError = string.Empty;
+
+        var plan = _pendingAiPlan;
+        List<AiScriptBackup>? scriptBackups = null;
 
         try
         {
-            ApplyAiPlan(_pendingAiPlan);
+            if (plan.Scripts.Count > 0)
+            {
+                if (_scriptHost is null)
+                    throw new InvalidOperationException("C# 热更宿主尚未初始化。");
 
-            var stateCount =
-                _pendingAiPlan.States.Count;
+                scriptBackups = await ApplyAiScriptFilesAsync(plan.Scripts);
 
-            var edgeCount =
-                _pendingAiPlan.Transitions.Count;
+                var reload = _scriptHost.Reload();
+                if (!reload.Success)
+                {
+                    throw new InvalidOperationException(
+                        "C# 热更编译失败：" + string.Join(" | ", reload.Errors));
+                }
+
+                // 新脚本编译成功后，先刷新反射动作目录。
+                DiscoverActionMethods();
+            }
+
+            if (plan.ApplyMachine)
+            {
+                // 到这里新 csx 动作已经存在，可以做完整动作校验。
+                ValidateAiPlan(plan, validateActions: true);
+                ApplyAiPlan(plan);
+            }
+
+            var changes = new List<string>();
+
+            if (plan.ApplyMachine)
+                changes.Add($"流程 {plan.States.Count} 个状态 / {plan.Transitions.Count} 条连线");
+
+            if (plan.Scripts.Count > 0)
+                changes.Add($"C# 热更 {plan.Scripts.Count} 个文件");
 
             _aiMessages.Add(new AiChatItem
             {
                 Role = "assistant",
-                Text =
-                    $"已应用到画布：{stateCount} 个状态，{edgeCount} 条连线。"
+                Text = "已应用：" + string.Join("，", changes) + "。"
             });
 
             _pendingAiPlan = null;
             _aiDialogOpen = false;
 
             await InvokeAsync(StateHasChanged);
-
             await Task.Delay(80);
 
-            if (_jsReady)
+            if (_jsReady && plan.ApplyMachine)
             {
                 await SyncJsAsync();
                 await FitCanvasAsync();
@@ -2740,8 +2695,233 @@ reply 最多 50 个汉字。
         }
         catch (Exception ex)
         {
-            _aiError =
-                ex.GetBaseException().Message;
+            if (scriptBackups is not null && scriptBackups.Count > 0)
+            {
+                try
+                {
+                    await RestoreAiScriptFilesAsync(scriptBackups);
+
+                    if (_scriptHost is not null)
+                    {
+                        var rollbackReload = _scriptHost.Reload();
+                        if (rollbackReload.Success)
+                            DiscoverActionMethods();
+                    }
+                }
+                catch (Exception rollbackEx)
+                {
+                    _aiError =
+                        $"{ex.GetBaseException().Message} | 脚本回滚失败：{rollbackEx.GetBaseException().Message}";
+                    return;
+                }
+            }
+
+            _aiError = ex.GetBaseException().Message;
+        }
+        finally
+        {
+            _aiBusy = false;
+        }
+    }
+
+    private string BuildAiCurrentScriptsJson()
+    {
+        if (_scriptHost is null || !Directory.Exists(_scriptHost.ScriptDirectory))
+            return "[]";
+
+        var root = Path.GetFullPath(_scriptHost.ScriptDirectory);
+
+        var scripts = Directory
+            .EnumerateFiles(root, "*.csx", SearchOption.AllDirectories)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .Select(path => new
+            {
+                fileName = Path.GetRelativePath(root, path).Replace('\\', '/'),
+                content = File.ReadAllText(path, Encoding.UTF8)
+            })
+            .ToArray();
+
+        return JsonSerializer.Serialize(scripts, _jsonOptions);
+    }
+
+    private static string ExtractAiJson(string content)
+    {
+        var text = content.Trim();
+
+        if (text.StartsWith("```", StringComparison.Ordinal))
+        {
+            var firstLineEnd = text.IndexOf('\n');
+            if (firstLineEnd >= 0)
+                text = text[(firstLineEnd + 1)..];
+
+            var lastFence = text.LastIndexOf("```", StringComparison.Ordinal);
+            if (lastFence >= 0)
+                text = text[..lastFence];
+
+            text = text.Trim();
+        }
+
+        var firstBrace = text.IndexOf('{');
+        var lastBrace = text.LastIndexOf('}');
+
+        if (firstBrace < 0 || lastBrace < firstBrace)
+            throw new InvalidOperationException("AI没有返回合法 JSON 对象。");
+
+        return text[firstBrace..(lastBrace + 1)];
+    }
+
+    private void ValidateAiScripts(IReadOnlyList<AiScriptPlan> scripts)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var script in scripts)
+        {
+            var relative = NormalizeAiScriptRelativePath(script.FileName);
+
+            if (!seen.Add(relative))
+                throw new InvalidOperationException($"AI重复修改同一个 csx 文件：{relative}");
+
+            script.FileName = relative;
+            script.Operation = (script.Operation ?? "upsert").Trim().ToLowerInvariant();
+
+            if (script.Operation is not ("upsert" or "delete"))
+                throw new InvalidOperationException($"不支持的 csx 操作：{script.Operation}");
+
+            if (script.Operation == "upsert" && string.IsNullOrWhiteSpace(script.Content))
+                throw new InvalidOperationException($"csx 文件内容为空：{relative}");
+
+            if (script.Operation == "delete")
+                script.Content = string.Empty;
+        }
+    }
+
+    private string NormalizeAiScriptRelativePath(string? fileName)
+    {
+        var relative = (fileName ?? string.Empty)
+            .Trim()
+            .Replace('\\', '/');
+
+        if (string.IsNullOrWhiteSpace(relative))
+            throw new InvalidOperationException("csx 文件名不能为空。");
+
+        if (!relative.EndsWith(".csx", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"热更文件必须是 .csx：{relative}");
+
+        if (Path.IsPathRooted(relative) ||
+            relative.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Any(x => x == ".." || x == "."))
+        {
+            throw new InvalidOperationException($"非法 csx 路径：{relative}");
+        }
+
+        if (relative.StartsWith("lib/", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("AI 不允许修改 HotScripts/lib 目录。");
+
+        return relative;
+    }
+
+    private string GetAiScriptFullPath(string relativePath)
+    {
+        if (_scriptHost is null)
+            throw new InvalidOperationException("C# 热更宿主尚未初始化。");
+
+        var root = Path.GetFullPath(_scriptHost.ScriptDirectory)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        var combined = Path.GetFullPath(
+            Path.Combine(
+                root,
+                relativePath.Replace('/', Path.DirectorySeparatorChar)));
+
+        var rootPrefix = root + Path.DirectorySeparatorChar;
+        var comparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+        if (!combined.StartsWith(rootPrefix, comparison))
+            throw new InvalidOperationException($"非法 csx 路径：{relativePath}");
+
+        return combined;
+    }
+
+    private async Task<List<AiScriptBackup>> ApplyAiScriptFilesAsync(
+        IReadOnlyList<AiScriptPlan> scripts)
+    {
+        ValidateAiScripts(scripts);
+
+        var backups = new List<AiScriptBackup>(scripts.Count);
+
+        foreach (var script in scripts)
+        {
+            var fullPath = GetAiScriptFullPath(script.FileName);
+            var existed = File.Exists(fullPath);
+            var oldContent = existed
+                ? await File.ReadAllTextAsync(fullPath, Encoding.UTF8)
+                : null;
+
+            backups.Add(new AiScriptBackup
+            {
+                FileName = script.FileName,
+                Existed = existed,
+                Content = oldContent
+            });
+        }
+
+        try
+        {
+            foreach (var script in scripts)
+            {
+                var fullPath = GetAiScriptFullPath(script.FileName);
+
+                if (script.Operation == "delete")
+                {
+                    if (File.Exists(fullPath))
+                        File.Delete(fullPath);
+
+                    continue;
+                }
+
+                var directory = Path.GetDirectoryName(fullPath);
+                if (!string.IsNullOrWhiteSpace(directory))
+                    Directory.CreateDirectory(directory);
+
+                await File.WriteAllTextAsync(
+                    fullPath,
+                    script.Content,
+                    new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            }
+
+            return backups;
+        }
+        catch
+        {
+            await RestoreAiScriptFilesAsync(backups);
+            throw;
+        }
+    }
+
+    private async Task RestoreAiScriptFilesAsync(
+        IReadOnlyList<AiScriptBackup> backups)
+    {
+        foreach (var backup in backups)
+        {
+            var fullPath = GetAiScriptFullPath(backup.FileName);
+
+            if (!backup.Existed)
+            {
+                if (File.Exists(fullPath))
+                    File.Delete(fullPath);
+
+                continue;
+            }
+
+            var directory = Path.GetDirectoryName(fullPath);
+            if (!string.IsNullOrWhiteSpace(directory))
+                Directory.CreateDirectory(directory);
+
+            await File.WriteAllTextAsync(
+                fullPath,
+                backup.Content ?? string.Empty,
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
     }
 
@@ -2809,6 +2989,7 @@ reply 最多 50 个汉字。
                     {
                         Id = Uid("variable"),
                         Name = variable.Name.Trim(),
+                        Address = variable.Address?.Trim() ?? string.Empty,
                         Type = variable.Type,
                         Value = CloneNode(value)
                     });
@@ -3093,6 +3274,10 @@ reply 最多 50 个汉字。
         public string Reply { get; set; } =
             string.Empty;
 
+        public bool ApplyMachine { get; set; } = true;
+
+        public List<AiScriptPlan> Scripts { get; set; } = new();
+
         public List<AiRegionPlan> Regions
         {
             get;
@@ -3118,6 +3303,20 @@ reply 最多 50 个汉字。
         } = new();
     }
 
+    private sealed class AiScriptPlan
+    {
+        public string FileName { get; set; } = string.Empty;
+        public string Operation { get; set; } = "upsert";
+        public string Content { get; set; } = string.Empty;
+    }
+
+    private sealed class AiScriptBackup
+    {
+        public string FileName { get; set; } = string.Empty;
+        public bool Existed { get; set; }
+        public string? Content { get; set; }
+    }
+
     private sealed class AiRegionPlan
     {
         public string Key { get; set; } =
@@ -3130,6 +3329,9 @@ reply 最多 50 个汉字。
     private sealed class AiVariablePlan
     {
         public string Name { get; set; } =
+            string.Empty;
+
+        public string Address { get; set; } =
             string.Empty;
 
         public string Type { get; set; } =
@@ -3369,7 +3571,8 @@ reply 最多 50 个汉字。
     }
 
     private void ValidateAiPlan(
-        AiMachinePlan plan)
+        AiMachinePlan plan,
+        bool validateActions = true)
     {
         if (plan.Regions.Count == 0)
             throw new InvalidOperationException(
@@ -3457,14 +3660,17 @@ reply 最多 50 个汉字。
                     $"状态 {state.Name} 引用了不存在的状态域：{state.RegionKey}");
             }
 
-            ValidateAiAction(
-                state.EnterAction);
+            if (validateActions)
+            {
+                ValidateAiAction(
+                    state.EnterAction);
 
-            ValidateAiAction(
-                state.LoopAction);
+                ValidateAiAction(
+                    state.LoopAction);
 
-            ValidateAiAction(
-                state.LeaveAction);
+                ValidateAiAction(
+                    state.LeaveAction);
+            }
         }
 
         foreach (var region
@@ -3595,78 +3801,68 @@ reply 最多 50 个汉字。
     private string BuildAiPlanPreview(
         AiMachinePlan plan)
     {
-        var text =
-            new StringBuilder();
+        var text = new StringBuilder();
 
-        if (!string.IsNullOrWhiteSpace(
-                plan.Reply))
+        if (!string.IsNullOrWhiteSpace(plan.Reply))
         {
-            text.AppendLine(
-                plan.Reply.Trim());
-
+            text.AppendLine(plan.Reply.Trim());
             text.AppendLine();
         }
 
-        text.AppendLine(
-            $"状态域：{plan.Regions.Count}");
-
-        text.AppendLine(
-            $"变量：{plan.Variables.Count}");
-
-        text.AppendLine(
-            $"状态：{plan.States.Count}");
-
-        text.AppendLine(
-            $"连线：{plan.Transitions.Count}");
-
-        text.AppendLine();
-
-        foreach (var state in plan.States)
+        if (plan.ApplyMachine)
         {
-            text.Append(
-                "● ");
+            text.AppendLine($"状态域：{plan.Regions.Count}");
+            text.AppendLine($"变量：{plan.Variables.Count}");
+            text.AppendLine($"状态：{plan.States.Count}");
+            text.AppendLine($"连线：{plan.Transitions.Count}");
 
-            text.AppendLine(
-                state.Name);
+            foreach (var state in plan.States)
+            {
+                text.Append("● ");
+                text.AppendLine(state.Name);
 
-            AppendAiActionPreview(
-                text,
-                "进入",
-                state.EnterAction);
+                AppendAiActionPreview(text, "进入", state.EnterAction);
+                AppendAiActionPreview(text, "循环", state.LoopAction);
+                AppendAiActionPreview(text, "离开", state.LeaveAction);
+            }
 
-            AppendAiActionPreview(
-                text,
-                "循环",
-                state.LoopAction);
+            if (plan.Transitions.Count > 0)
+            {
+                text.AppendLine();
+                text.AppendLine("连线：");
 
-            AppendAiActionPreview(
-                text,
-                "离开",
-                state.LeaveAction);
+                foreach (var transition in plan.Transitions)
+                {
+                    text.Append("  ");
+                    text.Append(transition.From);
+                    text.Append(" → ");
+                    text.Append(transition.To);
+
+                    if (!string.IsNullOrWhiteSpace(transition.Name))
+                    {
+                        text.Append(" · ");
+                        text.Append(transition.Name);
+                    }
+
+                    text.AppendLine();
+                }
+            }
+        }
+        else
+        {
+            text.AppendLine("状态机：保持当前编排不变");
         }
 
-        if (plan.Transitions.Count > 0)
+        if (plan.Scripts.Count > 0)
         {
             text.AppendLine();
-            text.AppendLine("连线：");
+            text.AppendLine("C# 热更：");
 
-            foreach (var transition
-                     in plan.Transitions)
+            foreach (var script in plan.Scripts)
             {
                 text.Append("  ");
-                text.Append(transition.From);
-                text.Append(" → ");
-                text.Append(transition.To);
-
-                if (!string.IsNullOrWhiteSpace(
-                        transition.Name))
-                {
-                    text.Append(" · ");
-                    text.Append(
-                        transition.Name);
-                }
-
-                text.AppendLine();
+                text.Append(script.Operation == "delete" ? "删除 " : "写入 ");
+                text.AppendLine(script.FileName);
             }
         }
 
@@ -3741,6 +3937,7 @@ reply 最多 50 个汉字。
     {
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
         public string Type { get; set; } = "number";
         public JsonNode? Value { get; set; }
     }
@@ -3853,6 +4050,3 @@ reply 最多 50 个汉字。
         public double Y { get; set; }
     }
 }
-
-
-
