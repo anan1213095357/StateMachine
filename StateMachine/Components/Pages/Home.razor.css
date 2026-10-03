@@ -198,6 +198,7 @@
 }
 
 .remove-btn {
+    padding-bottom: 20px;
     width: 29px;
     height: 29px;
     border-radius: 6px;
@@ -275,9 +276,145 @@
     margin-bottom: 6px;
 }
 
-.variable-address {
-    margin-bottom: 6px;
+.plc-binding {
+    margin: 7px 0;
+    padding: 8px;
+    border: 1px solid #2b374c;
+    border-radius: 7px;
+    background: #0b111b;
 }
+
+.plc-binding-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 7px;
+}
+
+.plc-binding-title {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .8px;
+    color: #718097;
+}
+
+.plc-binding-address {
+    margin-left: auto;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #111c2d;
+    color: #78aaff;
+    font-size: 9px;
+    font-family: Consolas, monospace;
+}
+
+.plc-binding-main {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.plc-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+}
+
+.plc-field {
+    min-width: 0;
+}
+
+.plc-field-label {
+    display: block;
+    margin: 0 0 4px 2px;
+    color: #697991;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.plc-binding .input,
+.plc-binding .select {
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    font-size: 10px;
+}
+
+.plc-empty-field {
+    visibility: hidden;
+}
+
+.plc-field {
+    min-width: 0;
+}
+
+.plc-field-label {
+    display: block;
+    margin: 0 0 3px 2px;
+    color: #596980;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+
+.plc-binding .input,
+.plc-binding .select {
+    height: 29px;
+    font-size: 10px;
+}
+
+.plc-number {
+    font-family: Consolas, monospace;
+}
+
+.plc-value-row {
+    grid-template-columns: 70px 1fr;
+    align-items: center;
+}
+.region-name-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: inherit;
+    padding: 0;
+}
+.variable-type-auto {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 7px;
+    border: 1px solid #293448;
+    border-radius: 6px;
+    background: #0b111b;
+    color: #78889f;
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.type-dot {
+    width: 6px;
+    height: 6px;
+    flex: none;
+    border-radius: 50%;
+    background: #68778d;
+}
+
+    .type-dot.bool {
+        background: #a57cff;
+    }
+
+    .type-dot.number {
+        background: #4c8dff;
+    }
+
+    .type-dot.text {
+        background: #2bd59a;
+    }
 
 .variable-address .input {
     font-family: Consolas, monospace;

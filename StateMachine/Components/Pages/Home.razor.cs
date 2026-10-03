@@ -1,15 +1,17 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
+using StateMachine.Scripting;
+using StateMachine.Services;
 using System.Globalization;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Reflection;
-using StateMachine.Scripting;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using Microsoft.Extensions.Configuration;
 namespace StateMachine.Components.Pages;
 
 public partial class Home
@@ -23,12 +25,10 @@ public partial class Home
         PropertyNameCaseInsensitive = true,
         WriteIndented = true
     };
-    [Inject]
-    private IWebHostEnvironment HostEnvironment { get; set; } = default!;
+    [Inject] private IWebHostEnvironment HostEnvironment { get; set; } = default!;
     [Inject] private IServiceProvider Services { get; set; } = default!;
-
-    [Inject]
-    private IConfiguration Configuration { get; set; } = default!;
+    [Inject] private PlcSyncService PlcSync { get; set; } = default!;
+    [Inject] private IConfiguration Configuration { get; set; } = default!;
 
     private MachineModel Machine { get; set; } = new();
     private RuntimeModel Runtime { get; } = new();
@@ -46,7 +46,6 @@ public partial class Home
     private int _runToken;
     private string _configKey = "default";
     private List<string> _configKeys = new();
-
     private static readonly HttpClient AiHttpClient = new()
     {
         Timeout = TimeSpan.FromMinutes(5)
@@ -73,10 +72,12 @@ public partial class Home
     {
         CreateDemo();
         ResetRuntimeCore(logInitialStates: true);
+
+        PlcSync.ValueChanged += OnPlcValueChanged;
+
         InitializeScriptHost();
         DiscoverActionMethods();
     }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -113,7 +114,60 @@ public partial class Home
             pending = PendingConnection
         });
     }
+    private void OnPlcValueChanged(
+    string name,
+    JsonNode? value)
+    {
+        _ = InvokeAsync(() =>
+        {
+            var variable =
+                Machine.Variables.FirstOrDefault(
+                    x => x.Name == name);
 
+            if (variable is null ||
+                string.IsNullOrWhiteSpace(variable.Address))
+            {
+                return;
+            }
+
+            var converted =
+                ConvertNodeValue(
+                    value,
+                    variable.Type);
+
+            variable.Value =
+                CloneNode(converted);
+
+            Runtime.Variables[name] =
+                CloneNode(converted);
+
+            RefreshCurrentConditionResults();
+            StateHasChanged();
+        });
+    }
+
+    private JsonNode? GetRuntimeVariable(
+        string name)
+    {
+        var variable =
+            Machine.Variables.FirstOrDefault(
+                x => x.Name == name);
+
+        if (variable is not null &&
+            !string.IsNullOrWhiteSpace(variable.Address))
+        {
+            var plcValue = PlcSync.Get(name);
+
+            if (plcValue is not null)
+                return CloneNode(plcValue);
+        }
+
+        return Runtime.Variables.TryGetValue(
+            name,
+            out var value)
+            ? CloneNode(value)
+            : null;
+    }
     // =========================================================
     // REFLECTION ACTION SYSTEM
     // =========================================================
@@ -121,9 +175,7 @@ public partial class Home
     {
         _scriptContext = new StateScriptContext(
             Services,
-            name => Runtime.Variables.TryGetValue(name, out var value)
-                ? CloneNode(value)
-                : null,
+            GetRuntimeVariable,
             SetRuntimeVariable,
             AddLog);
 
@@ -1064,14 +1116,35 @@ public partial class Home
     // REGION / VARIABLE
     // =========================================================
     private void SelectRegion(string regionId) => SelectedRegionId = regionId;
+    private void RenameRegion(string regionId, string name)
+    {
+        var region = GetRegion(regionId);
+        if (region is null) return;
 
-    private void AddRegion()
+        region.Name = name;
+    }
+    private async Task AddRegion()
     {
         var region = CreateRegion($"状态域 {Machine.Regions.Count + 1}");
         Machine.Regions.Add(region);
         SelectedRegionId = region.Id;
-    }
 
+        var point = _jsReady
+            ? await JS.InvokeAsync<CanvasPoint>(
+                "industrialStateMachineUi.getAddStatePosition")
+            : new CanvasPoint { X = 280, Y = 140 };
+
+        var state = CreateState(region.Id, point.X, point.Y);
+        state.IsStart = true;
+
+        Machine.States.Add(state);
+
+        SelectedStateId = state.Id;
+        SelectedEdgeId = null;
+
+        Runtime.CurrentStates[region.Id] = state.Id;
+        RefreshCurrentConditionResults();
+    }
     private void DeleteRegion(string regionId)
     {
         var stateIds = Machine.States.Where(x => x.RegionId == regionId).Select(x => x.Id).ToHashSet();
@@ -1102,7 +1175,12 @@ public partial class Home
         newName = newName.Trim();
         if (string.IsNullOrWhiteSpace(newName)) newName = "Variable";
         variable.Name = newName;
+        PlcSync.RemoveBinding(oldName);
 
+        PlcSync.UpsertBinding(
+            newName,
+            variable.Address,
+            variable.Type);
         if (Runtime.Variables.TryGetValue(oldName, out var runtimeValue))
         {
             Runtime.Variables[newName] = runtimeValue;
@@ -1151,6 +1229,7 @@ public partial class Home
         variable.Type = type;
         variable.Value = ConvertNodeValue(variable.Value, type);
         Runtime.Variables[variable.Name] = CloneNode(variable.Value);
+        PlcSync.UpsertBinding(variable.Name, variable.Address, variable.Type);
         RefreshCurrentConditionResults();
     }
 
@@ -1158,15 +1237,17 @@ public partial class Home
     {
         var variable = Machine.Variables.FirstOrDefault(x => x.Id == variableId);
         if (variable is null) return;
-        variable.Value = ConvertValue(value, variable.Type);
-        Runtime.Variables[variable.Name] = CloneNode(variable.Value);
-        RefreshCurrentConditionResults();
+
+        SetRuntimeVariable(
+            variable.Name,
+            ConvertValue(value, variable.Type));
     }
 
     private void DeleteVariable(string variableId)
     {
         var variable = Machine.Variables.FirstOrDefault(x => x.Id == variableId);
         if (variable is null) return;
+        PlcSync.RemoveBinding(variable.Name);
         Machine.Variables.Remove(variable);
         Runtime.Variables.Remove(variable.Name);
         RefreshCurrentConditionResults();
@@ -1481,6 +1562,12 @@ public partial class Home
     private void ResetRuntimeCore(bool logInitialStates)
     {
         _runToken++;
+
+        foreach (var variable in Machine.Variables)
+        {
+            if (!string.IsNullOrWhiteSpace(variable.Address))
+                SyncVariableTypeFromPlc(variable);
+        }
         Runtime.Running = false;
         Runtime.StopRequested = false;
 
@@ -1663,25 +1750,52 @@ public partial class Home
     {
         var variable = Machine.Variables.FirstOrDefault(x => x.Id == variableId);
         if (variable is null) return;
-        var converted = ConvertValue(value, variable.Type);
-        Runtime.Variables[variable.Name] = CloneNode(converted);
-        variable.Value = CloneNode(converted);
-        RefreshCurrentConditionResults();
+
+        SetRuntimeVariable(
+            variable.Name,
+            ConvertValue(value, variable.Type));
     }
 
-    private void SetRuntimeVariable(string name, JsonNode? value)
+    private void SetRuntimeVariable(
+    string name,
+    JsonNode? value)
     {
-        var variable = Machine.Variables.FirstOrDefault(x => x.Name == name);
+        var variable =
+            Machine.Variables.FirstOrDefault(
+                x => x.Name == name);
+
         if (variable is not null)
         {
-            var converted = ConvertNodeValue(value, variable.Type);
-            variable.Value = CloneNode(converted);
-            Runtime.Variables[name] = CloneNode(converted);
+            var converted =
+                ConvertNodeValue(
+                    value,
+                    variable.Type);
+
+            variable.Value =
+                CloneNode(converted);
+
+            Runtime.Variables[name] =
+                CloneNode(converted);
+
+            if (!string.IsNullOrWhiteSpace(
+                    variable.Address))
+            {
+                PlcSync.UpsertBinding(
+                    variable.Name,
+                    variable.Address,
+                    variable.Type);
+
+                PlcSync.Set(
+                    variable.Name,
+                    converted);
+            }
         }
         else
         {
-            Runtime.Variables[name] = CloneNode(value);
+            Runtime.Variables[name] =
+                CloneNode(value);
         }
+
         RefreshCurrentConditionResults();
     }
 
@@ -1794,6 +1908,22 @@ public partial class Home
 
             NormalizeMachine();
 
+            foreach (var variable in Machine.Variables)
+            {
+                if (!string.IsNullOrWhiteSpace(variable.Address))
+                    SyncVariableTypeFromPlc(variable);
+            }
+
+            PlcSync.ReplaceBindings(
+                            Machine.Variables
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(x.Address))
+                    .Select(x =>
+                        new PlcVariableBinding(
+                            x.Name,
+                            x.Address,
+                            x.Type)));
+
             SelectedRegionId = Machine.Regions.FirstOrDefault()?.Id;
             SelectedStateId = null;
             SelectedEdgeId = null;
@@ -1810,7 +1940,198 @@ public partial class Home
             AddLog("ERROR", ex.Message, "error");
         }
     }
+    private void ChangeVariableAddress(
+    string variableId,
+    string address)
+    {
+        var variable =
+            Machine.Variables.FirstOrDefault(
+                x => x.Id == variableId);
 
+        if (variable is null)
+            return;
+
+        variable.Address = address;
+
+        PlcSync.UpsertBinding(
+            variable.Name,
+            variable.Address,
+            variable.Type);
+    }
+
+    private static string[] PlcAddressParts(
+        string? address)
+    {
+        return (address ?? string.Empty)
+            .Split(
+                ':',
+                StringSplitOptions.RemoveEmptyEntries |
+                StringSplitOptions.TrimEntries);
+    }
+
+    private static string GetPlcArea(
+        string? address)
+    {
+        var p = PlcAddressParts(address);
+
+        return p.Length >= 1
+            ? p[0].ToUpperInvariant()
+            : "HR";
+    }
+
+    private static string GetPlcAddress(
+        string? address)
+    {
+        var p = PlcAddressParts(address);
+
+        return p.Length >= 2
+            ? p[1]
+            : "0";
+    }
+
+    private static string GetPlcDataType( string? address, string? variableType = null)
+    {
+        var p = PlcAddressParts(address);
+        var area = p.Length >= 1 ? p[0].ToUpperInvariant() : "HR";
+        if (area is "C" or "DI") return "BOOL";
+        if (p.Length >= 3)  return p[2].ToUpperInvariant();
+        return variableType switch
+        {
+            "boolean" => "BOOL",
+            "string" => "STRING",
+            _ => "F32"
+        };
+    }
+
+    private static string GetPlcExtra(
+        string? address,
+        string defaultValue)
+    {
+        var p = PlcAddressParts(address);
+
+        return p.Length >= 4
+            ? p[3]
+            : defaultValue;
+    }
+
+    private void ChangePlcArea(VariableModel variable, string area)
+    {
+        area = area.ToUpperInvariant();
+        var address = GetPlcAddress(variable.Address);
+        if (area is "C" or "DI")
+        {
+            ChangeVariableAddress(variable.Id, $"{area}:{address}");
+        }
+        else
+        {
+            var oldType = GetPlcDataType(variable.Address, variable.Type);
+            if (oldType is "BOOL" or
+                "I16" or
+                "U16" or
+                "I32" or
+                "U32" or
+                "F32" or
+                "F64")
+            {
+                ChangeVariableAddress(variable.Id, $"{area}:{address}:{oldType}");
+            }
+            else
+            {
+                ChangeVariableAddress(variable.Id, $"{area}:{address}:F32");
+            }
+        }
+        SyncVariableTypeFromPlc(variable);
+        PlcSync.UpsertBinding(variable.Name, variable.Address, variable.Type);
+        StateHasChanged();
+    }
+
+    private void ChangePlcAddress(VariableModel variable, string address)
+    {
+        if (!ushort.TryParse(address, out var number)) number = 0;
+        var area = GetPlcArea(variable.Address);
+        var type = GetPlcDataType(variable.Address, variable.Type);
+        if (area is "C" or "DI")
+        {
+            ChangeVariableAddress(variable.Id, $"{area}:{number}"); return;
+        }
+        if (type == "BOOL")
+        {
+            ChangeVariableAddress(variable.Id, $"{area}:{number}:BOOL:{GetPlcExtra(variable.Address, "0")}");
+        }
+        else if (type == "STRING")
+        {
+            ChangeVariableAddress(variable.Id, $"{area}:{number}:STRING:{GetPlcExtra(variable.Address, "16")}");
+        }
+        else
+        {
+            ChangeVariableAddress(variable.Id, $"{area}:{number}:{type}");
+        }
+        SyncVariableTypeFromPlc(variable);
+        PlcSync.UpsertBinding(variable.Name, variable.Address, variable.Type);
+    }
+
+    private void ChangePlcDataType(VariableModel variable, string type)
+    {
+        var area = GetPlcArea(variable.Address);
+        var address = GetPlcAddress(variable.Address);
+        type = type.ToUpperInvariant();
+        if (type == "BOOL")
+        {
+            ChangeVariableAddress(variable.Id, $"{area}:{address}:BOOL:0");
+        }
+        else if (type == "STRING")
+        {
+            ChangeVariableAddress(variable.Id, $"{area}:{address}:STRING:16");
+        }
+        else
+        {
+            ChangeVariableAddress(variable.Id, $"{area}:{address}:{type}");
+        }
+        SyncVariableTypeFromPlc(variable);
+        PlcSync.UpsertBinding(variable.Name, variable.Address, variable.Type);
+        StateHasChanged();
+    }
+
+    private void ChangePlcExtra(VariableModel variable, string extra)
+    {
+        var area = GetPlcArea(variable.Address);
+        var address = GetPlcAddress(variable.Address);
+        var type = GetPlcDataType(variable.Address, variable.Type);
+        if (type == "BOOL")
+        {
+            if (!int.TryParse(extra, out var bit)) bit = 0;
+            bit = Math.Clamp(bit, 0, 15);
+            ChangeVariableAddress(variable.Id, $"{area}:{address}:BOOL:{bit}");
+        }
+        else if (type == "STRING")
+        {
+            if (!ushort.TryParse(extra, out var length)) length = 16;
+            if (length == 0) length = 1;
+            ChangeVariableAddress(variable.Id, $"{area}:{address}:STRING:{length}");
+        }
+        SyncVariableTypeFromPlc(variable);
+        PlcSync.UpsertBinding(variable.Name, variable.Address, variable.Type);
+    }
+
+    private void SyncVariableTypeFromPlc(VariableModel variable)
+    {
+        var area = GetPlcArea(variable.Address);
+
+        var plcType = GetPlcDataType(variable.Address);
+
+        variable.Type = area is "C" or "DI"
+                ? "boolean"
+                : plcType switch
+                {
+                    "BOOL" => "boolean",
+                    "STRING" => "string",
+                    _ => "number"
+                };
+
+        variable.Value = ConvertNodeValue(variable.Value, variable.Type);
+
+        Runtime.Variables[variable.Name] = CloneNode(variable.Value);
+    }
     private async Task DeleteConfigAsync()
     {
         var key = _configKey.Trim();
@@ -2087,6 +2408,8 @@ public partial class Home
     {
         _runToken++;
         Runtime.Running = false;
+
+        PlcSync.ValueChanged -= OnPlcValueChanged;
 
         if (_scriptHost is not null)
         {
@@ -2577,7 +2900,7 @@ reply 尽量简短。
 
             using var document = JsonDocument.Parse(responseText);
             var choice = document.RootElement.GetProperty("choices")[0];
-            
+
 
             var content = choice
                 .GetProperty("message")
@@ -3932,7 +4255,6 @@ reply 尽量简短。
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
     }
-
     public sealed class VariableModel
     {
         public string Id { get; set; } = string.Empty;

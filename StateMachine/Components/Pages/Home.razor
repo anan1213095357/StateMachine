@@ -68,7 +68,10 @@
                         <div class="region-card @(SelectedRegionId == region.Id ? "selected" : "")" @onclick="() => SelectRegion(region.Id)">
                             <div class="region-line">
                                 <div class="region-color"></div>
-                                <div class="region-name">@region.Name</div>
+                                <input class="region-name region-name-input"
+                                       value="@region.Name"
+                                       @oninput="e => RenameRegion(region.Id, e.Value?.ToString() ?? string.Empty)"
+                                       @onclick:stopPropagation="true" />
                                 <button class="remove-btn delete-region" style="width:25px;height:25px" @onclick="() => DeleteRegion(region.Id)" @onclick:stopPropagation="true">×</button>
                             </div>
                             <div class="region-current">Current：<strong>@(currentState?.Name ?? "-")</strong></div>
@@ -91,32 +94,199 @@
                                 <input class="input" value="@variable.Name" @oninput="e => RenameVariable(variable.Id, e.Value?.ToString() ?? string.Empty)" />
                                 <button class="remove-btn" @onclick="() => DeleteVariable(variable.Id)">×</button>
                             </div>
-                            <div class="variable-address">
-                                <input class="input"
-                                       placeholder="PLC 地址，例如 DB1.DBX0.0 / M0.0"
-                                       @bind="variable.Address"
-                                       @bind:event="oninput" />
+                            <div class="plc-binding">
+
+                                <div class="plc-binding-head">
+                                    <span class="plc-binding-title">PLC</span>
+
+                                    @if (!string.IsNullOrWhiteSpace(variable.Address))
+                                    {
+                                        <span class="plc-binding-address">
+                                            @variable.Address
+                                        </span>
+                                    }
+                                </div>
+
+                                <div class="plc-binding-main">
+
+                                    <div class="plc-binding-main">
+
+                                        <div class="plc-row">
+                                            <div class="plc-field">
+                                                <span class="plc-field-label">区域</span>
+
+                                                <select class="select"
+                                                        value="@GetPlcArea(variable.Address)"
+                                                        @onchange='e => ChangePlcArea(variable, e.Value?.ToString() ?? "HR")'>
+                                                    <option value="C">C · 线圈</option>
+                                                    <option value="DI">DI · 输入</option>
+                                                    <option value="HR">HR · 保持寄存器</option>
+                                                    <option value="IR">IR · 输入寄存器</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="plc-field">
+                                                <span class="plc-field-label">地址</span>
+
+                                                <input class="input plc-number"
+                                                       type="number"
+                                                       min="0"
+                                                       value="@GetPlcAddress(variable.Address)"
+                                                       @onchange='e => ChangePlcAddress(variable, e.Value?.ToString() ?? "0")' />
+                                            </div>
+                                        </div>
+
+
+                                        @if (GetPlcArea(variable.Address) is "HR" or "IR")
+                                        {
+                                            <div class="plc-row">
+
+                                                <div class="plc-field">
+                                                    <span class="plc-field-label">数据类型</span>
+
+                                                    <select class="select"
+                                                            value="@GetPlcDataType(variable.Address, variable.Type)"
+                                                            @onchange='e => ChangePlcDataType(variable, e.Value?.ToString() ?? "F32")'>
+
+                                                        <option value="BOOL">BOOL</option>
+                                                        <option value="I16">INT16</option>
+                                                        <option value="U16">UINT16</option>
+                                                        <option value="I32">INT32</option>
+                                                        <option value="U32">UINT32</option>
+                                                        <option value="F32">FLOAT</option>
+                                                        <option value="F64">DOUBLE</option>
+
+                                                        @if (GetPlcArea(variable.Address) == "HR")
+                                                        {
+                                                            <option value="STRING">STRING</option>
+                                                        }
+
+                                                    </select>
+                                                </div>
+
+
+                                                @if (GetPlcDataType(variable.Address, variable.Type) == "BOOL")
+                                                {
+                                                    <div class="plc-field">
+                                                        <span class="plc-field-label">Bit</span>
+
+                                                        <select class="select"
+                                                                value="@GetPlcExtra(variable.Address, "0")"
+                                                                @onchange='e => ChangePlcExtra(variable, e.Value?.ToString() ?? "0")'>
+
+                                                            @for (var bit = 0; bit < 16; bit++)
+                                                            {
+                                                                <option value="@bit">Bit @bit</option>
+                                                            }
+
+                                                        </select>
+                                                    </div>
+                                                }
+                                                else if (GetPlcArea(variable.Address) == "HR" &&
+                                                         GetPlcDataType(variable.Address, variable.Type) == "STRING")
+                                                {
+                                                    <div class="plc-field">
+                                                        <span class="plc-field-label">字符串长度</span>
+
+                                                        <input class="input plc-number"
+                                                               type="number"
+                                                               min="1"
+                                                               max="100"
+                                                               value="@GetPlcExtra(variable.Address, "16")"
+                                                               @onchange='e => ChangePlcExtra(variable, e.Value?.ToString() ?? "16")' />
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="plc-field plc-empty-field"></div>
+                                                }
+
+                                            </div>
+                                        }
+
+                                    </div>
+
+                                    @if (GetPlcArea(variable.Address) is "HR" or "IR" &&
+                                         GetPlcDataType(variable.Address, variable.Type) == "BOOL")
+                                    {
+                                        <div class="plc-field plc-bit-field">
+                                            <span class="plc-field-label">位</span>
+
+                                            <select class="select plc-select"
+                                                    value="@GetPlcExtra(variable.Address, "0")"
+                                                    @onchange='e => ChangePlcExtra(variable, e.Value?.ToString() ?? "0")'>
+
+                                                @for (var bit = 0; bit < 16; bit++)
+                                                {
+                                                    <option value="@bit">Bit @bit</option>
+                                                }
+
+                                            </select>
+                                        </div>
+                                    }
+
+                                    @if (GetPlcArea(variable.Address) == "HR" &&
+                                         GetPlcDataType(variable.Address, variable.Type) == "STRING")
+                                    {
+                                        <div class="plc-field plc-length-field">
+                                            <span class="plc-field-label">长度</span>
+
+                                            <input class="input plc-number"
+                                                   type="number"
+                                                   min="1"
+                                                   max="100"
+                                                   value="@GetPlcExtra(variable.Address, "16")"
+                                                   @onchange='e => ChangePlcExtra(variable, e.Value?.ToString() ?? "16")' />
+                                        </div>
+                                    }
+
+                                </div>
+
                             </div>
 
-                            <div class="variable-bottom">
-                                <select class="select" value="@variable.Type" @onchange='e => ChangeVariableType(variable.Id, e.Value?.ToString() ?? "string")'>
-                                    <option value="number">number</option>
-                                    <option value="string">string</option>
-                                    <option value="boolean">boolean</option>
-                                    <option value="json">json</option>
-                                </select>
+                            <div class="variable-bottom plc-value-row">
+
+                                <div class="variable-type-auto">
+                                    @switch (variable.Type)
+                                    {
+                                        case "boolean":
+                                            <span class="type-dot bool"></span>
+                                            <span>BOOL</span>
+                                            break;
+
+                                        case "number":
+                                            <span class="type-dot number"></span>
+                                            <span>NUMBER</span>
+                                            break;
+
+                                        case "string":
+                                            <span class="type-dot text"></span>
+                                            <span>STRING</span>
+                                            break;
+
+                                        default:
+                                            <span class="type-dot"></span>
+                                            <span>@variable.Type.ToUpperInvariant()</span>
+                                            break;
+                                    }
+                                </div>
 
                                 @if (variable.Type == "boolean")
                                 {
-                                    <select class="select" value="@DisplayNode(variable.Value, variable.Type)" @onchange='e => ChangeVariableValue(variable.Id, e.Value?.ToString() ?? "false")'>
-                                        <option value="true">true</option>
-                                        <option value="false">false</option>
+                                    <select class="select"
+                                            value="@DisplayNode(variable.Value, variable.Type)"
+                                            @onchange='e => ChangeVariableValue(variable.Id, e.Value?.ToString() ?? "false")'>
+                                        <option value="true">ON</option>
+                                        <option value="false">OFF</option>
                                     </select>
                                 }
                                 else
                                 {
-                                    <input class="input" value="@DisplayNode(variable.Value, variable.Type)" @onchange="e => ChangeVariableValue(variable.Id, e.Value?.ToString() ?? string.Empty)" />
+                                    <input class="input"
+                                           value="@DisplayNode(variable.Value, variable.Type)"
+                                           @onchange="e => ChangeVariableValue(variable.Id, e.Value?.ToString() ?? string.Empty)" />
                                 }
+
                             </div>
                         </div>
                     }
